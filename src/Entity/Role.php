@@ -18,6 +18,14 @@ class Role
     #[ORM\Column(length: 50)]
     private ?string $label = null;
 
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roles')]
+    private $users;
+
+    public function __construct()
+    {
+        $this->users = new ArrayCollection();
+    }
+
     //*#[ORM\OneToMany(mappedBy: 'role', targetEntity: Utilisateur::class, cascade: ['remove'])]
     //*private Collection $utilisateurs;
 
@@ -42,6 +50,34 @@ class Role
 
         return $this;
     }
+
+    /**
+     * @return Collection|User[]
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): self
+    {
+        if (!$this->users->contains($user)) {
+            $this->users[] = $user;
+            $user->addRole($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removeRole($this);
+        }
+
+        return $this;
+    }
+}
 
     /**
      * @return Collection<int, Utilisateur>
@@ -72,4 +108,4 @@ class Role
 
     *    return $this;
     *}*/
-}
+
