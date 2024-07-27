@@ -16,9 +16,13 @@ framework:
     #fragments: true
     php_errors:
         log: true
+    
+    # serializer:
+    #     default_context:
+    #         circular_reference_handler: 'App\Serializer\CircularReferenceHandler'
 
 when@test:
     framework:
         test: true
         session:
-            storage_factory_id: session.storage.factory.mock_file
+            storage_factory_id: session.storage.factory.mock_file`

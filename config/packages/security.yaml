@@ -41,7 +41,7 @@ security:
         - { path: ^/api/login, roles: ROLE_USER }
         - { path: ^/api/doc, roles: PUBLIC_ACCESS }
         - { path: ^/api/avis, roles: PUBLIC_ACCESS }
-        - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/api, roles: PUBLIC_ACCESS }
         - { path: ^/api/manager, roles: ROLE_MANAGER }
         - { path: ^/api/employee, roles: ROLE_EMPLOYEE }
         - { path: ^/api/veterinaire, roles: ROLE_VETERINAIRE }
