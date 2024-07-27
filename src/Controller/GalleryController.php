@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Gallery;
 use App\Entity\Habitat;
+use App\Entity\Animal;
 use App\Repository\GalleryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,9 +26,38 @@ class GalleryController extends AbstractController
         private GalleryRepository $repository,
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
-        )
+    )
     {
-}
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/gallery",
+     *     summary="Add a picture",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Add a picture ",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="title", type="string", example=1),
+     *             @OA\Property(property="image_data", type="string", format="binary"),
+     *             @OA\Property(property="habitat", type="integer", example=1),
+     *             @OA\Property(property="animal", type="array", @OA\Items(type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Image enregistrée avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="image_data", type="string", format="binary"),
+     *             @OA\Property(property="habitat", type="integer", example=1),
+     *             @OA\Property(property="animal", type="array", @OA\Items(type="integer"))
+     *         )
+     *     )
+     * )
+     */
     #[Route(methods: ['POST'])]
     public function uploadImage(Request $request, EntityManagerInterface $em): Response
     {
@@ -55,11 +85,11 @@ class GalleryController extends AbstractController
             return new JsonResponse(['error' => 'Failed to upload image'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-         // Find the Habitat entity by id
-         $habitat = $em->getRepository(Habitat::class)->find($habitatId);
-         if (!$habitat) {
-             return new JsonResponse(['error' => 'Habitat not found'], Response::HTTP_NOT_FOUND);
-         }
+        // Find the Habitat entity by id
+        $habitat = $em->getRepository(Habitat::class)->find($habitatId);
+        if (!$habitat) {
+            return new JsonResponse(['error' => 'Habitat not found'], Response::HTTP_NOT_FOUND);
+        }
 
         // Create a new Gallery entity
         $gallery = new Gallery();
@@ -79,44 +109,53 @@ class GalleryController extends AbstractController
 
     /**
      * @OA\Get(
-     *     path="/api/galley/{id}",
-     *     summary="Get avis by ID",
+     *     path="/api/gallery/{id}",
+     *     summary="Obtenir une image par ID",
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         @OA\Schema(type="integer"),
-     *         description="ID of the avis"
+     *         description="ID de l'image"
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Gallery details",
+     *         description="Détails de l'image",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="pseudo", type="string", example="Pseudo"),
-     *             @OA\Property(property="commentaire", type="string", example="Commentaire"),
-     *             @OA\Property(property="isVisible", type="boolean", example=true)
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="image_data", type="string", format="binary"),
+     *             @OA\Property(property="habitat", type="integer", example=1),
+     *             @OA\Property(property="animal", type="array", @OA\Items(type="integer"))
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Avis not found"
+     *         description="Image non trouvée"
      *     )
      * )
      */
+    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    public function show(int $id): JsonResponse
+    {
+        $gallery = $this->repository->findOneBy(['id' => $id]);
 
-   #[Route('/{id}', name: 'show', methods: 'GET')]
-   public function show(int $id): JsonResponse
-   {
-       $gallery = $this->repository->findOneBy(['id' => $id]);
+        if (!$gallery) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
 
-       if (!$gallery) {
-           return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
-       }
+        // Get habitat id from the gallery
+        $habitatId = $gallery->getHabitat() ? $gallery->getHabitat()->getId() : null;
 
-       $responseData = $this->serializer->serialize($gallery, 'json', [
-        AbstractNormalizer::GROUPS => ['gallery:read', 'gallery:write'],
-    ]);
-       return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
-   }
+        // Prepare the response data including the habitat id
+        $responseData = $this->serializer->serialize($gallery, 'json', [
+            AbstractNormalizer::GROUPS => ['gallery:read', 'gallery:write'],
+        ]);
+
+        // Decode the serialized data to add habitat_id
+        $responseArray = json_decode($responseData, true);
+        $responseArray['habitat'] = $habitatId;
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
+    }
 }
