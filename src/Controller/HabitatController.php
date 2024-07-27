@@ -12,17 +12,20 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use OpenApi\Annotations as OA;
 
 #[Route('api/habitat', name: 'app_api_habitat_')]
 class HabitatController extends AbstractController
 {
-    public function __construct(
-        private EntityManagerInterface $manager,
-        private HabitatRepository $repository,
-        private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-    ) {
+    private HabitatRepository $repository;
+    private SerializerInterface $serializer;
+    private EntityManagerInterface $manager;
+
+    public function __construct(HabitatRepository $repository, SerializerInterface $serializer, EntityManagerInterface $manager)
+    {
+        $this->repository = $repository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -74,7 +77,7 @@ class HabitatController extends AbstractController
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    /**
+     /**
      * @OA\Get(
      *     path="/api/habitat/{id}",
      *     summary="Get habitat by ID",
@@ -93,7 +96,8 @@ class HabitatController extends AbstractController
      *             @OA\Property(property="id", type="integer", example=1),
      *             @OA\Property(property="nom", type="string", example="Forest"),
      *             @OA\Property(property="description", type="string", example="A large forest"),
-     *             @OA\Property(property="commentaire_habitat", type="string", example="This is a comment")
+     *             @OA\Property(property="commentaire_habitat", type="string", example="This is a comment"),
+     *             @OA\Property(property="gallery_ids", type="array", @OA\Items(type="integer"))
      *         )
      *     ),
      *     @OA\Response(
@@ -102,7 +106,7 @@ class HabitatController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: 'GET')]
+    #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         $habitat = $this->repository->findOneBy(['id' => $id]);
@@ -111,10 +115,23 @@ class HabitatController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($habitat, 'json');
-        return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
-    }
+        // Get gallery IDs
+        $galleryIds = [];
+        foreach ($habitat->getGallery() as $gallery) {
+            $galleryIds[] = $gallery->getId();
+        }
 
+        // Prepare the response data including the gallery IDs
+        $responseData = $this->serializer->serialize($habitat, 'json', [
+            AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'],
+        ]);
+
+        // Decode the serialized data to add gallery_ids
+        $responseArray = json_decode($responseData, true);
+        $responseArray['Gallery'] = $galleryIds;
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
+    }
     /**
      * @OA\Put(
      *     path="/api/habitat/{id}",

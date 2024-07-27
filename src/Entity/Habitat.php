@@ -2,38 +2,49 @@
 
 namespace App\Entity;
 
-use App\Repository\HabitatRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: HabitatRepository::class)]
 class Habitat
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]       
+    #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['habitat:read', 'habitat:write'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['habitat:read', 'habitat:write'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 80)]
+    #[Groups(['habitat:read', 'habitat:write'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['habitat:read', 'habitat:write'])]
     private ?string $commentaire_habitat = null;
 
     #[ORM\OneToMany(mappedBy: 'habitat', targetEntity: Animal::class, cascade: ["persist"])]
+    #[Groups(['habitat:read'])]
     private Collection $animals;
 
     #[ORM\OneToMany(mappedBy: 'habitat', targetEntity: Image::class, cascade: ["persist"])]
+    #[Groups(['habitat:read'])]
     private Collection $images;
+
+    #[ORM\OneToMany(mappedBy: 'habitat', targetEntity: Gallery::class)]
+    #[Groups(['habitat:read', 'habitat:write'])]
+    private Collection $Gallery;
 
     public function __construct()
     {
         $this->animals = new ArrayCollection();
         $this->images = new ArrayCollection();
+        $this->Gallery = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -131,6 +142,36 @@ class Habitat
             // set the owning side to null (unless already changed)
             if ($image->getHabitat() === $this) {
                 $image->setHabitat(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Gallery>
+     */
+    public function getGallery(): Collection
+    {
+        return $this->Gallery;
+    }
+
+    public function addGallery(Gallery $gallery): static
+    {
+        if (!$this->Gallery->contains($gallery)) {
+            $this->Gallery->add($gallery);
+            $gallery->setHabitat($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGallery(Gallery $gallery): static
+    {
+        if ($this->Gallery->removeElement($gallery)) {
+            // set the owning side to null (unless already changed)
+            if ($gallery->getHabitat() === $this) {
+                $gallery->setHabitat(null);
             }
         }
 
