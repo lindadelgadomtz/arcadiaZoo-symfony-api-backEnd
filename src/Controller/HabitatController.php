@@ -12,17 +12,19 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use OpenApi\Annotations as OA;
 
 #[Route('api/habitat', name: 'app_api_habitat_')]
 class HabitatController extends AbstractController
 {
-    public function __construct(
-        private EntityManagerInterface $manager,
-        private HabitatRepository $repository,
-        private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-    ) {
+    private HabitatRepository $repository;
+    private SerializerInterface $serializer;
+
+    public function __construct(HabitatRepository $repository, SerializerInterface $serializer)
+    {
+        $this->repository = $repository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -102,16 +104,20 @@ class HabitatController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: 'GET')]
+    #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
+        echo("hola");
         $habitat = $this->repository->findOneBy(['id' => $id]);
 
         if (!$habitat) {
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($habitat, 'json');
+        $responseData = $this->serializer->serialize($habitat, 'json', [
+            AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'],
+        ]);
+
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 

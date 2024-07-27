@@ -15,6 +15,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
 use OpenApi\Annotations as OA;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 #[Route('/api', name: 'app_api_')]
 class SecurityController extends AbstractController
@@ -57,6 +58,7 @@ class SecurityController extends AbstractController
         $user = $this->serializer->deserialize($request->getContent(), User::class, 'json');
         $user->setPassword($this->passwordHasher->hashPassword($user, $user->getPassword()));
         $user->setCreatedAt(new DateTimeImmutable());
+        $user->setRoles($user->getRoles());
 
         $this->manager->persist($user);
         $this->manager->flush();
@@ -93,8 +95,10 @@ class SecurityController extends AbstractController
      * )
      */
     #[Route('/login', name: 'login', methods: ['POST'])]
-    public function login(#[CurrentUser] ?User $user): JsonResponse
+    public function login(): JsonResponse
     {
+        $user = $this->getUser();
+
         if (null === $user) {
             return new JsonResponse(['message' => 'Missing credentials'], Response::HTTP_UNAUTHORIZED);
         }
