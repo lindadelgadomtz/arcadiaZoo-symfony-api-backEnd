@@ -29,7 +29,7 @@ class GalleryController extends AbstractController
         EntityManagerInterface $manager, 
         GalleryRepository $repository,
         SerializerInterface $serializer,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
     )
     {
         $this->manager = $manager;
@@ -118,7 +118,7 @@ class GalleryController extends AbstractController
         $gallery->setHabitat($habitat);
     
         foreach ($animalEntities as $animal) {
-            $gallery->addAnimal($animal);
+            $gallery->setAnimal($animal);
         }
     
         $this->manager->persist($gallery);

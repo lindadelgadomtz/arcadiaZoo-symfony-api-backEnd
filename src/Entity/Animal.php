@@ -39,19 +39,19 @@ class Animal
     #[Groups(['animal:read', 'animal:write'])]
     private ?Habitat $habitat = null;
 
-    #[ORM\ManyToMany(targetEntity: Image::class, mappedBy: 'animals', cascade: ["persist"])]
-    #[Groups(['animal:read', 'animal:write'])]
-    private Collection $images;
+    // #[ORM\ManyToMany(targetEntity: Image::class, inversedBy: 'animals', cascade: ["persist"])]
+    // #[Groups(['animal:read', 'animal:write'])]
+    // private Collection $images;
 
-    #[ORM\ManyToMany(targetEntity: Gallery::class, mappedBy: 'animals')]
+    #[ORM\ManyToMany(targetEntity: Gallery::class, inversedBy: 'animals')]
     #[Groups(['animal:read', 'animal:write', 'gallery:read'])]
-    private Collection $galleries;
+    private Collection $gallery;
 
     public function __construct()
     {
         $this->rapportVeterinaires = new ArrayCollection();
-        $this->images = new ArrayCollection();
-        $this->galleries = new ArrayCollection();
+        // $this->images = new ArrayCollection();
+        $this->gallery = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -130,52 +130,54 @@ class Animal
         return $this;
     }
 
-    /**
-     * @return Collection<int, Image>
-     */
-    public function getImages(): Collection
-    {
-        return $this->images;
-    }
+    // /**
+    //  * @return Collection<int, Image>
+    //  */
+    // public function getImages(): Collection
+    // {
+    //     return $this->images;
+    // }
 
-    public function addImage(Image $image): static
-    {
-        if (!$this->images->contains($image)) {
-            $this->images->add($image);
-            $image->addAnimal($this);
-        }
-        return $this;
-    }
+    // public function addImage(Image $image): static
+    // {
+    //     if (!$this->images->contains($image)) {
+    //         $this->images->add($image);
+    //         $image->addAnimal($this);
+    //     }
+    //     return $this;
+    // }
 
-    public function removeImage(Image $image): static
-    {
-        if ($this->images->removeElement($image)) {
-            $image->removeAnimal($this);
-        }
-        return $this;
-    }
+    // public function removeImage(Image $image): static
+    // {
+    //     if ($this->images->removeElement($image)) {
+    //         $image->removeAnimal($this);
+    //     }
+    //     return $this;
+    // }
 
     /**
      * @return Collection<int, Gallery>
      */
-    public function getGalleries(): Collection
+    public function getGallery(): Collection
     {
-        return $this->galleries;
+        return $this->gallery;
     }
 
-    public function addGallery(Gallery $gallery): static
+    public function setGallery(Gallery $gallery): static
     {
-        if (!$this->galleries->contains($gallery)) {
-            $this->galleries->add($gallery);
-            $gallery->addAnimal($this); // Ensure Gallery has addAnimal method
+        if (!$this->gallery->contains($gallery)) {
+            $this->gallery->add($gallery);
+            $gallery->setAnimal($this); 
         }
         return $this;
     }
 
     public function removeGallery(Gallery $gallery): static
     {
-        if ($this->galleries->removeElement($gallery)) {
-            $gallery->removeAnimal($this); // Ensure Gallery has removeAnimal method
+        if ($this->gallery->removeElement($gallery)) {
+            if ($gallery->getAnimals() === $this) {
+                $gallery->setAnimal($this);
+            }
         }
         return $this;
     }

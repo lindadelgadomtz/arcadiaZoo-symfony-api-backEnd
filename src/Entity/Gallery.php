@@ -82,11 +82,11 @@ class Gallery
         return $this->animals;
     }
 
-    public function addAnimal(Animal $animal): self
+    public function setAnimal(Animal $animal): self
     {
         if (!$this->animals->contains($animal)) {
             $this->animals->add($animal);
-            $animal->addGallery($this);
+            $animal->setGallery($this);
         }
         return $this;
     }

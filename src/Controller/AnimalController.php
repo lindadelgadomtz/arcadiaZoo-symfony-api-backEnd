@@ -152,20 +152,31 @@ class AnimalController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: 'GET')]
+    #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         $animal = $this->repository->findOneBy(['id' => $id]);
 
         if (!$animal) {
-            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
+        // Get gallery IDs
+        $galleryIds = [];
+        foreach ($animal->getGallery() as $gallery) {
+            $galleryIds[] = $gallery->getId();
+        }
+
+        // Prepare the response data including the gallery IDs
         $responseData = $this->serializer->serialize($animal, 'json', [
-            AbstractNormalizer::GROUPS => ['animal:read']
+            AbstractNormalizer::GROUPS => ['animal:read', 'animal:write'],
         ]);
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        // Decode the serialized data to add gallery_ids
+        $responseArray = json_decode($responseData, true);
+        $responseArray['gallery'] = $galleryIds;
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
     }
 
     /**
