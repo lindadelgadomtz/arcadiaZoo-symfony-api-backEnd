@@ -6,6 +6,7 @@ use App\Repository\AnimalRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
 class Animal
@@ -13,33 +14,44 @@ class Animal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['animal:read', 'animal:write', 'habitat:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['animal:read', 'animal:write'])]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['animal:read', 'animal:write'])]
     private ?string $etat = null;
 
     #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class, cascade: ["persist"])]
+    #[Groups(['animal:read', 'animal:write'])]
     private Collection $rapportVeterinaires;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['animal:read', 'animal:write', 'habitat:read'])]
     private ?Race $race = null;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['animal:read', 'animal:write'])]
     private ?Habitat $habitat = null;
 
-    #[ORM\ManyToMany(targetEntity: Image::class, mappedBy: 'animal', cascade: ["persist"])]
-    private Collection $images;
+    // #[ORM\ManyToMany(targetEntity: Image::class, inversedBy: 'animals', cascade: ["persist"])]
+    // #[Groups(['animal:read', 'animal:write'])]
+    // private Collection $images;
 
-    
+    #[ORM\ManyToMany(targetEntity: Gallery::class, inversedBy: 'animals')]
+    #[Groups(['animal:read', 'animal:write', 'gallery:read'])]
+    private Collection $gallery;
+
     public function __construct()
     {
         $this->rapportVeterinaires = new ArrayCollection();
-        $this->images = new ArrayCollection();
+        // $this->images = new ArrayCollection();
+        $this->gallery = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -55,7 +67,6 @@ class Animal
     public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
-
         return $this;
     }
 
@@ -67,7 +78,6 @@ class Animal
     public function setEtat(string $etat): static
     {
         $this->etat = $etat;
-
         return $this;
     }
 
@@ -85,19 +95,16 @@ class Animal
             $this->rapportVeterinaires->add($rapportVeterinaire);
             $rapportVeterinaire->setAnimal($this);
         }
-
         return $this;
     }
 
     public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
     {
         if ($this->rapportVeterinaires->removeElement($rapportVeterinaire)) {
-            // set the owning side to null (unless already changed)
             if ($rapportVeterinaire->getAnimal() === $this) {
                 $rapportVeterinaire->setAnimal(null);
             }
         }
-
         return $this;
     }
 
@@ -109,7 +116,6 @@ class Animal
     public function setRace(?Race $race): static
     {
         $this->race = $race;
-
         return $this;
     }
 
@@ -121,36 +127,58 @@ class Animal
     public function setHabitat(?Habitat $habitat): static
     {
         $this->habitat = $habitat;
-
         return $this;
     }
+
+    // /**
+    //  * @return Collection<int, Image>
+    //  */
+    // public function getImages(): Collection
+    // {
+    //     return $this->images;
+    // }
+
+    // public function addImage(Image $image): static
+    // {
+    //     if (!$this->images->contains($image)) {
+    //         $this->images->add($image);
+    //         $image->addAnimal($this);
+    //     }
+    //     return $this;
+    // }
+
+    // public function removeImage(Image $image): static
+    // {
+    //     if ($this->images->removeElement($image)) {
+    //         $image->removeAnimal($this);
+    //     }
+    //     return $this;
+    // }
 
     /**
-     * @return Collection<int, Image>
+     * @return Collection<int, Gallery>
      */
-    public function getImages(): Collection
+    public function getGallery(): Collection
     {
-        return $this->images;
+        return $this->gallery;
     }
 
-    public function addImage(Image $image): static
+    public function setGallery(Gallery $gallery): static
     {
-        if (!$this->images->contains($image)) {
-            $this->images->add($image);
-            $image->addAnimal($this);
+        if (!$this->gallery->contains($gallery)) {
+            $this->gallery->add($gallery);
+            $gallery->setAnimal($this); 
         }
-
         return $this;
     }
 
-    public function removeImage(Image $image): static
+    public function removeGallery(Gallery $gallery): static
     {
-        if ($this->images->removeElement($image)) {
-            $image->removeAnimal($this);
+        if ($this->gallery->removeElement($gallery)) {
+            if ($gallery->getAnimals() === $this) {
+                $gallery->setAnimal($this);
+            }
         }
-
         return $this;
     }
-
-    
 }
