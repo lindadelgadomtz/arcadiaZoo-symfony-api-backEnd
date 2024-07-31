@@ -34,6 +34,9 @@ class Gallery
     #[Groups(['gallery:read', 'gallery:write'])]
     private Collection $animals;
 
+    #[ORM\OneToOne(mappedBy: 'gallery', cascade: ['persist', 'remove'])]
+    private ?Service $service = null;
+
     public function __construct()
     {
         $this->animals = new ArrayCollection();
@@ -96,6 +99,28 @@ class Gallery
         if ($this->animals->removeElement($animal)) {
             $animal->removeGallery($this);
         }
+        return $this;
+    }
+
+    public function getService(): ?Service
+    {
+        return $this->service;
+    }
+
+    public function setService(?Service $service): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($service === null && $this->service !== null) {
+            $this->service->setGallery(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($service !== null && $service->getGallery() !== $this) {
+            $service->setGallery($this);
+        }
+
+        $this->service = $service;
+
         return $this;
     }
 }

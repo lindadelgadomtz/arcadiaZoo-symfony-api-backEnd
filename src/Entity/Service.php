@@ -6,6 +6,7 @@ use App\Repository\ServiceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 class Service
 {
@@ -21,9 +22,10 @@ class Service
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $createdAt = null;  
+    private ?\DateTimeImmutable $createdAt = null;
 
-
+    #[ORM\OneToOne(inversedBy: 'service', cascade: ['persist', 'remove'], orphanRemoval: true, targetEntity: Gallery::class)]
+    private ?Gallery $gallery = null; 
 
     public function getId(): ?int
     {
@@ -56,12 +58,24 @@ class Service
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->createdAt;  
+        return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static  // Corrected the camelCase here
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt; 
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getGallery(): ?Gallery
+    {
+        return $this->gallery;
+    }
+
+    public function setGallery(?Gallery $gallery): static
+    {
+        $this->gallery = $gallery;
 
         return $this;
     }
