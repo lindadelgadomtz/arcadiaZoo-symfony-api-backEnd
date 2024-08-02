@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\RapportVeterinaireRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: RapportVeterinaireRepository::class)]
 class RapportVeterinaire
@@ -12,29 +14,33 @@ class RapportVeterinaire
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?\DateTimeInterface $date = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?string $detail = null;
-
-    /*#[ORM\ManyToOne(inversedBy: 'rapportVeterinaires', cascade: ["persist"])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Utilisateur $username = null; */
 
     #[ORM\ManyToOne(inversedBy: 'rapportVeterinaires', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
+    #[MaxDepth(1)]
     private ?Animal $animal = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?string $etat_animal = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?string $nourriture = null;
 
     #[ORM\Column]
+    #[Groups(['rapportVeterinaire:read', 'rapportVeterinaire:write'])]
     private ?int $nourriture_grammage = null;
 
     public function getId(): ?int
@@ -65,19 +71,6 @@ class RapportVeterinaire
 
         return $this;
     }
-
-    /*public function getUsername(): ?Utilisateur
-    {
-        return $this->username;
-    }
-
-    public function setUsername(?Utilisateur $username): static
-    {
-        $this->username = $username;
-
-        return $this;
-    }*/
-    
 
     public function getAnimal(): ?Animal
     {

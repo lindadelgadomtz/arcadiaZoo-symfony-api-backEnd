@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
 class Animal
@@ -14,29 +15,29 @@ class Animal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['animal:read', 'animal:write', 'habitat:read'])]
+    #[Groups(['animal:read', 'animal:write', 'habitat:read', 'rapportVeterinaire:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['animal:read', 'animal:write'])]
+    #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read'])]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['animal:read', 'animal:write'])]
+    #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read'])]
     private ?string $etat = null;
 
-    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class, cascade: ["persist"])]
-    #[Groups(['animal:read', 'animal:write'])]
+    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class, cascade: ["persist"], orphanRemoval: true)]
+    #[MaxDepth(1)]
     private Collection $rapportVeterinaires;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['animal:read', 'animal:write', 'habitat:read'])]
+    #[Groups(['animal:read', 'animal:write', 'habitat:read', 'rapportVeterinaire:read'])]
     private ?Race $race = null;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['animal:read', 'animal:write'])]
+    #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read'])]
     private ?Habitat $habitat = null;
 
     // #[ORM\ManyToMany(targetEntity: Image::class, inversedBy: 'animals', cascade: ["persist"])]
@@ -101,6 +102,7 @@ class Animal
     public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
     {
         if ($this->rapportVeterinaires->removeElement($rapportVeterinaire)) {
+            // Set the owning side to null (unless already changed)
             if ($rapportVeterinaire->getAnimal() === $this) {
                 $rapportVeterinaire->setAnimal(null);
             }
