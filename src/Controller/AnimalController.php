@@ -179,6 +179,20 @@ class AnimalController extends AbstractController
         return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
     }
 
+    // DOCUMENTATION
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        $animal = $this->repository->findAll();
+
+        if (!$animal) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+
+        $responseData = $this->serializer->serialize($animal, 'json', ['groups' => ['animal:read']]);
+        return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
+    }
+
     /**
      * @OA\Put(
      *     path="/api/animal/{id}",
