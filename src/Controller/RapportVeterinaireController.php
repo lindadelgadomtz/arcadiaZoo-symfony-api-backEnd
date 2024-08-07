@@ -4,9 +4,6 @@ namespace App\Controller;
 
 use App\Entity\RapportVeterinaire;
 use App\Repository\RapportVeterinaireRepository;
-use App\Repository\AnimalRepository;
-use App\Repository\RaceRepository;
-use App\Repository\HabitatRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +13,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use OpenApi\Annotations as OA;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface; // or DenormalizerInterface if needed
 
 #[Route('api/rapportVeterinaire', name: 'app_api_rapportVeterinaire_')]
 class RapportVeterinaireController extends AbstractController
@@ -24,12 +20,8 @@ class RapportVeterinaireController extends AbstractController
     public function __construct(
         private EntityManagerInterface $manager,
         private RapportVeterinaireRepository $repository,
-        private AnimalRepository $animalRepository,
-        private RaceRepository $raceRepository,
-        private HabitatRepository $habitatRepository,
         private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-        private NormalizerInterface $normalizer, // or DenormalizerInterface if needed
+        private UrlGeneratorInterface $urlGenerator
     ) {
     }
 
@@ -66,52 +58,19 @@ class RapportVeterinaireController extends AbstractController
      *     )
      * )
      */
-    #[Route(methods: ['POST'])]
+    #[Route(methods: 'POST')]
     public function new(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        $animalId = $data['animal']['id'];
-        $animal = $this->animalRepository->find($animalId);
-
-        if (!$animal) {
-            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        // Fetch the race and habitat to avoid creating new ones
-        $raceId = $data['animal']['race']['id'];
-        $race = $this->raceRepository->find($raceId);
-
-        if (!$race) {
-            return new JsonResponse(['error' => 'Race not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $habitatId = $data['animal']['habitat']['id'];
-        $habitat = $this->habitatRepository->find($habitatId);
-
-        if (!$habitat) {
-            return new JsonResponse(['error' => 'Habitat not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $rapportVeterinaire = new RapportVeterinaire();
-        $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
-        $rapportVeterinaire->setDetail($data['detail']);
-        $rapportVeterinaire->setEtatAnimal($data['etat_animal']);
-        $rapportVeterinaire->setNourriture($data['nourriture']);
-        $rapportVeterinaire->setNourritureGrammage($data['nourriture_grammage']);
-        $rapportVeterinaire->setAnimal($animal);
-
-        $animal->setRace($race);
-        $animal->setHabitat($habitat);
+        $rapportVeterinaire = $this->serializer->deserialize(
+            $request->getContent(),
+            RapportVeterinaire::class,
+            'json'
+        );
 
         $this->manager->persist($rapportVeterinaire);
         $this->manager->flush();
 
-        $responseData = $this->serializer->serialize($rapportVeterinaire, 'json', [
-            'groups' => ['rapportVeterinaire:read']
-
-    
-        ]);
+        $responseData = $this->serializer->serialize($rapportVeterinaire, 'json');
         $location = $this->urlGenerator->generate(
             'app_api_rapportVeterinaire_show',
             ['id' => $rapportVeterinaire->getId()],
@@ -151,7 +110,7 @@ class RapportVeterinaireController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', methods: 'GET')]
     public function show(int $id): JsonResponse
     {
         $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);
@@ -198,7 +157,7 @@ class RapportVeterinaireController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: 'PUT')]
     public function edit(int $id, Request $request): JsonResponse
     {
         $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);
@@ -207,25 +166,12 @@ class RapportVeterinaireController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-
         $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
         $rapportVeterinaire->setDetail($data['detail']);
-        $rapportVeterinaire->setEtatAnimal($data['etat_animal']);
-        $rapportVeterinaire->setNourriture($data['nourriture']);
-        $rapportVeterinaire->setNourritureGrammage($data['nourriture_grammage']);
-
-        // If updating the associated animal, race, or habitat, make sure to handle that accordingly.
-        // For example, you might want to update these associations based on new data.
-        if (isset($data['animal']['id'])) {
-            $animalId = $data['animal']['id'];
-            $animal = $this->animalRepository->find($animalId);
-            if ($animal) {
-                $rapportVeterinaire->setAnimal($animal);
-            }
-        }
+        // Update animal association if needed
+        // $rapportVeterinaire->setAnimal($animal);
 
         $this->manager->flush();
-
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
 
@@ -250,7 +196,7 @@ class RapportVeterinaireController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
         $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);

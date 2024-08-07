@@ -21,14 +21,11 @@ class HabitatController extends AbstractController
     private HabitatRepository $repository;
     private SerializerInterface $serializer;
     private EntityManagerInterface $manager;
-    private UrlGeneratorInterface $urlGenerator;
 
-    public function __construct(HabitatRepository $repository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
+    public function __construct(HabitatRepository $repository, SerializerInterface $serializer, EntityManagerInterface $manager)
     {
         $this->repository = $repository;
         $this->serializer = $serializer;
-        $this->manager = $manager;
-        $this->urlGenerator = $urlGenerator;
     }
 
     /**
@@ -57,27 +54,28 @@ class HabitatController extends AbstractController
      *     )
      * )
      */
-
-    #[Route(methods: ['POST'])]
+    #[Route(methods: 'POST')]
     public function new(Request $request): JsonResponse
     {
-        $habitat = $this->serializer->deserialize($request->getContent(), Habitat::class, 'json');
+        $habitat = $this->serializer->deserialize(
+            $request->getContent(),
+            Habitat::class,
+            'json'
+        );
 
+        // Tell Doctrine you want to (eventually) save the habitat (no queries yet)
         $this->manager->persist($habitat);
+        // Actually executes the queries (i.e. the INSERT query)
         $this->manager->flush();
 
-        $responseData = $this->serializer->serialize($habitat, 'json', [
-            AbstractNormalizer::GROUPS => ['habitat:read']
-        ]);
+        $responseData = $this->serializer->serialize($habitat, 'json');
         $location = $this->urlGenerator->generate(
             'app_api_habitat_show',
             ['id' => $habitat->getId()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
-
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
-
 
      /**
      * @OA\Get(
@@ -99,8 +97,7 @@ class HabitatController extends AbstractController
      *             @OA\Property(property="nom", type="string", example="Forest"),
      *             @OA\Property(property="description", type="string", example="A large forest"),
      *             @OA\Property(property="commentaire_habitat", type="string", example="This is a comment"),
-     *             @OA\Property(property="gallery_ids", type="array", @OA\Items(type="integer")),
-     *             @OA\Property(property="animal_ids", type="array", @OA\Items(type="integer")), 
+     *             @OA\Property(property="gallery_ids", type="array", @OA\Items(type="integer"))
      *         )
      *     ),
      *     @OA\Response(
@@ -118,59 +115,23 @@ class HabitatController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-                // Get gallery IDs
-                $galleryIds = [];
-                foreach ($habitat->getGallery() as $gallery) {
-                    $galleryIds[] = $gallery->getId();
-                }
-        
-                // Prepare the response data including the gallery IDs
+        // Get gallery IDs
+        $galleryIds = [];
+        foreach ($habitat->getGallery() as $gallery) {
+            $galleryIds[] = $gallery->getId();
+        }
+
+        // Prepare the response data including the gallery IDs
         $responseData = $this->serializer->serialize($habitat, 'json', [
             AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'],
         ]);
 
         // Decode the serialized data to add gallery_ids
         $responseArray = json_decode($responseData, true);
-        $responseArray['gallery'] = $galleryIds;
+        $responseArray['Gallery'] = $galleryIds;
 
         return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
     }
-
-    // DOCUMENTATION
-    #[Route(methods: 'GET')]
-    public function showAll(): JsonResponse
-    {
-        $habitats = $this->repository->findAll();
-
-        if (!$habitats) {
-            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
-        }
-
-        $responseArray = [];
-        foreach ($habitats as $habitat) {
-            // Get gallery IDs for each habitat
-            $galleryIds = [];
-            foreach ($habitat->getGallery() as $gallery) {
-                $galleryIds[] = $gallery->getUrlImage();
-            }
-
-            // Serialize each habitat
-            $serializedHabitat = $this->serializer->serialize($habitat, 'json', [
-                AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'],
-            ]);
-
-            // Decode serialized data to add gallery_ids and custom fields
-            $habitatArray = json_decode($serializedHabitat, true);
-            $habitatArray['gallery'] = $galleryIds;
-            $habitatArray['url_image'] = $habitat->getGallery();
-
-            $responseArray[] = $habitatArray;
-        }
-
-        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
-    }
-
-
     /**
      * @OA\Put(
      *     path="/api/habitat/{id}",
@@ -201,7 +162,7 @@ class HabitatController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: 'PUT')]
     public function edit(int $id, Request $request): JsonResponse
     {
         $habitat = $this->repository->findOneBy(['id' => $id]);
@@ -217,7 +178,6 @@ class HabitatController extends AbstractController
         $this->manager->flush();
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
-
 
     /**
      * @OA\Delete(
@@ -240,7 +200,7 @@ class HabitatController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
         $habitat = $this->repository->findOneBy(['id' => $id]);
