@@ -13,20 +13,26 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use DateTimeImmutable;
+use Doctrine\ORM\Mapping\Id;
 use OpenApi\Annotations as OA;
 
 #[Route('api/service', name:'app_api_service_')]
 class ServiceController extends AbstractController
 
 {
-    public function __construct(
-        private EntityManagerInterface $manager, 
-        private ServiceRepository $repository,
-        private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-        )
+    private ServiceRepository $repository;
+    private SerializerInterface $serializer;
+    private EntityManagerInterface $manager; 
+    private UrlGeneratorInterface $urlGenerator;
+    
+        public function __construct(ServiceRepository $repository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
     {
+        $this->repository = $repository;
+        $this->serializer = $serializer;
+        $this->manager = $manager;
+        $this->urlGenerator = $urlGenerator;
     }
 
     /**
@@ -153,6 +159,35 @@ public function new(Request $request): JsonResponse
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
+    // DOCUMENTATION
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        $services = $this->repository->findAll();
+    
+        if (!$services) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+    
+        $responseArray = [];
+        foreach ($services as $service) {
+            // Get gallery ID for the service
+            $gallery = $service->getGallery();
+            $galleryId = $gallery ? $gallery->getUrlImage() : null;
+    
+            // Serialize each service
+            $serializedService = $this->serializer->serialize($service, 'json', ['groups' => ['service:read', 'service:write']]);
+            // Decoding serialized data to add gallery_id and custom fields
+            $serviceArray = json_decode($serializedService, true); // CHANGE: Decode serialized data
+            $serviceArray['gallery'] = $galleryId; // CHANGE: Add gallery ID to the array
+    
+            $responseArray[] = $serviceArray;
+        }
+    
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK); // CHANGE: Return responseArray instead of services
+    }
+    
+    
     /**
      * @OA\Put(
      *     path="/api/service/{id}",

@@ -124,6 +124,9 @@ class GalleryController extends AbstractController
         $gallery->setTitle($title);
         $gallery->setUrlImage('/img/' . $newFilename);
 
+
+
+
         $this->manager->persist($gallery);
         $this->manager->flush();
 
