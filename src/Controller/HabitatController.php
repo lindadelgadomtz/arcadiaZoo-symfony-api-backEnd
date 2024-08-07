@@ -140,15 +140,36 @@ class HabitatController extends AbstractController
     #[Route(methods: 'GET')]
     public function showAll(): JsonResponse
     {
-        $habitat = $this->repository->findAll();
+        $habitats = $this->repository->findAll();
 
-        if (!$habitat) {
+        if (!$habitats) {
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($habitat, 'json', ['groups' => ['habitat:read']]);
-        return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
+        $responseArray = [];
+        foreach ($habitats as $habitat) {
+            // Get gallery IDs for each habitat
+            $galleryIds = [];
+            foreach ($habitat->getGallery() as $gallery) {
+                $galleryIds[] = $gallery->getUrlImage();
+            }
+
+            // Serialize each habitat
+            $serializedHabitat = $this->serializer->serialize($habitat, 'json', [
+                AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'],
+            ]);
+
+            // Decode serialized data to add gallery_ids and custom fields
+            $habitatArray = json_decode($serializedHabitat, true);
+            $habitatArray['gallery'] = $galleryIds;
+            $habitatArray['url_image'] = $habitat->getGallery();
+
+            $responseArray[] = $habitatArray;
+        }
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
     }
+
 
     /**
      * @OA\Put(
@@ -233,4 +254,3 @@ class HabitatController extends AbstractController
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
 }
-
