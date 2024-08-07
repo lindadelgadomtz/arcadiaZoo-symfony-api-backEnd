@@ -6,7 +6,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
-use App\Repository\HabitatRepository;
 
 #[ORM\Entity(repositoryClass: HabitatRepository::class)]
 class Habitat
@@ -14,7 +13,7 @@ class Habitat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['habitat:read', 'habitat:write', 'animal:read'])]
+    #[Groups(['habitat:read', 'habitat:write'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -39,13 +38,13 @@ class Habitat
 
     #[ORM\OneToMany(mappedBy: 'habitat', targetEntity: Gallery::class)]
     #[Groups(['habitat:read', 'habitat:write'])]
-    private Collection $gallery;
+    private Collection $Gallery;
 
     public function __construct()
     {
         $this->animals = new ArrayCollection();
         $this->images = new ArrayCollection();
-        $this->gallery = new ArrayCollection();
+        $this->Gallery = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,6 +60,7 @@ class Habitat
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
+
         return $this;
     }
 
@@ -72,6 +72,7 @@ class Habitat
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -83,6 +84,7 @@ class Habitat
     public function setCommentaireHabitat(?string $commentaire_habitat): static
     {
         $this->commentaire_habitat = $commentaire_habitat;
+
         return $this;
     }
 
@@ -100,16 +102,19 @@ class Habitat
             $this->animals->add($animal);
             $animal->setHabitat($this);
         }
+
         return $this;
     }
 
     public function removeAnimal(Animal $animal): static
     {
         if ($this->animals->removeElement($animal)) {
+            // set the owning side to null (unless already changed)
             if ($animal->getHabitat() === $this) {
                 $animal->setHabitat(null);
             }
         }
+
         return $this;
     }
 
@@ -127,16 +132,19 @@ class Habitat
             $this->images->add($image);
             $image->setHabitat($this);
         }
+
         return $this;
     }
 
     public function removeImage(Image $image): static
     {
         if ($this->images->removeElement($image)) {
+            // set the owning side to null (unless already changed)
             if ($image->getHabitat() === $this) {
                 $image->setHabitat(null);
             }
         }
+
         return $this;
     }
 
@@ -145,25 +153,28 @@ class Habitat
      */
     public function getGallery(): Collection
     {
-        return $this->gallery;
+        return $this->Gallery;
     }
 
     public function addGallery(Gallery $gallery): static
     {
-        if (!$this->gallery->contains($gallery)) {
-            $this->gallery->add($gallery);
+        if (!$this->Gallery->contains($gallery)) {
+            $this->Gallery->add($gallery);
             $gallery->setHabitat($this);
         }
+
         return $this;
     }
 
     public function removeGallery(Gallery $gallery): static
     {
-        if ($this->gallery->removeElement($gallery)) {
+        if ($this->Gallery->removeElement($gallery)) {
+            // set the owning side to null (unless already changed)
             if ($gallery->getHabitat() === $this) {
                 $gallery->setHabitat(null);
             }
         }
+
         return $this;
     }
 }
