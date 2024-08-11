@@ -1,112 +1,4 @@
 <?php
-/*
-namespace App\Entity;
-
-use App\Repository\UtilisateurRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
-
-#[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-class Utilisateur
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $username = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $password = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $nom = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $prenom = null;
-
-    #[ORM\ManyToOne(inversedBy: 'utilisateurs',  cascade: ["remove"])]
-    #[ORM\JoinColumn(nullable: false, onDelete:"CASCADE")]
-    private ?Role $role = null;
-
-    #[ORM\OneToMany(mappedBy: 'username', targetEntity: RapportVeterinaire::class)]
-    private Collection $rapportVeterinaires;
-
-    public function __construct()
-    {
-        $this->rapportVeterinaires = new ArrayCollection();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getUsername(): ?string
-    {
-        return $this->username;
-    }
-
-    public function setUsername(string $username): static
-    {
-        $this->username = $username;
-
-        return $this;
-    }
-
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
-
-        return $this;
-    }
-
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(string $nom): static
-    {
-        $this->nom = $nom;
-
-        return $this;
-    }
-
-    public function getPrenom(): ?string
-    {
-        return $this->prenom;
-    }
-
-    public function setPrenom(string $prenom): static
-    {
-        $this->prenom = $prenom;
-
-        return $this;
-    }
-    public function getRole(): ?Role
-    {
-        return $this->role;
-    }
-
-    public function setRole(?Role $role): static
-    {
-        $this->role = $role;
-
-        return $this;
-    }
-}*/
-
-
-/*
-<?php
 
 namespace App\Controller;
 
@@ -125,6 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use OpenApi\Annotations as OA;
 
+
 #[Route('api/animalFeeding', name: 'app_api_animalFeeding_')]
 class AnimalFeedingController extends AbstractController
 {
@@ -135,9 +28,11 @@ class AnimalFeedingController extends AbstractController
     private UrlGeneratorInterface $urlGenerator;
     private EntityManagerInterface $manager;
 
-    public function __construct(AnimalFeedingRepository $repository, AnimalRepository $animalRepository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
+    public function __construct(AnimalFeedingRepository $repository, AnimalRepository $animalRepository, UserRepository $userRepository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
     {
         $this->repository = $repository;
+        $this->animalRepository = $animalRepository;
+        $this->userRepository = $userRepository;
         $this->serializer = $serializer;
         $this->manager = $manager;
         $this->urlGenerator = $urlGenerator;
@@ -219,8 +114,11 @@ class AnimalFeedingController extends AbstractController
             return new JsonResponse(['error' => 'Invalid animal or user ID'], Response::HTTP_BAD_REQUEST);
         }
 
-        $animalFeeding->setAnimal($animal);
-        $animalFeeding->setUser($user);
+        $animal = $this->animalRepository->find($data['animal']['id']);
+        if ($animal) {
+        $animalFeeding->addAnimal($animal);  // Correct way to add animal
+        }
+        $animalFeeding->addUser($user);
 
         $this->manager->persist($animalFeeding);
         $this->manager->flush();
@@ -284,7 +182,10 @@ class AnimalFeedingController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($animalFeeding, 'json');
+        $responseData = $this->serializer->serialize($animalFeeding, 'json', [
+            AbstractNormalizer::GROUPS => ['animalFeeding:read']
+        ]);
+        
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
@@ -358,8 +259,11 @@ class AnimalFeedingController extends AbstractController
             return new JsonResponse(['error' => 'Invalid animal or user ID'], Response::HTTP_BAD_REQUEST);
         }
 
-        $animalFeeding->setAnimal($animal);
-        $animalFeeding->setUser($user);
+        $animal = $this->animalRepository->find($data['animal']['id']);
+        if ($animal) {
+        $animalFeeding->addAnimal($animal);  // Correct way to add animal
+        }
+        $animalFeeding->addUser($user);
 
         $this->manager->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
@@ -400,6 +304,3 @@ class AnimalFeedingController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }
-
-
-*/

@@ -22,8 +22,6 @@ class Avis
     #[ORM\Column]
     private ?bool $isVisible = null;
 
-
-
     public function getId(): ?int
     {
         return $this->id;
