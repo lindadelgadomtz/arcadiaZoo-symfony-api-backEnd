@@ -159,6 +159,38 @@ public function new(Request $request): JsonResponse
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
+        /**
+     * @OA\Get(
+     *     path="/api/service",
+     *     summary="Get all service",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the service"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Service details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="nom", type="string", example="Nom du service"),
+     *             @OA\Property(property="description", type="string", example="Description du service"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time", example="2024-07-18T14:30:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Services not found"
+     *     )
+     * )
+     */
+
+
+
+
     // DOCUMENTATION
     #[Route(methods: 'GET')]
     public function showAll(): JsonResponse

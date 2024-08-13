@@ -140,6 +140,55 @@ class GalleryController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    // /**
+    //  * @OA\Put(
+    //  *     path="/api/gallery/{id}",
+    //  *     summary="Update gallery by ID",
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer"),
+    //  *         description="ID of the gallery"
+    //  *     ),
+    //  *     @OA\RequestBody(
+    //  *         required=true,
+    //  *         @OA\JsonContent(
+    //  *             type="object",
+    //  *             @OA\Property(property="id", type="integer", example=1),
+    //  *             @OA\Property(property="title", type="string", example="Sample Image"),
+    //  *             @OA\Property(property="url_image", type="string", example="/img/sample-image-unique-id.jpg"),
+    //  *             @OA\Property(property="service", type="integer", example=1)
+    //  *         )
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=204,
+    //  *         description="Picture updated successfully"
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=404,
+    //  *         description="Picture not found"
+    //  *     )
+    //  * )
+    //  */
+
+     #[Route('/{id}', name: 'edit', methods: ['PUT'])] 
+     public function edit(int $id, Request $request): JsonResponse
+     {
+         $gallery = $this->repository->findOneBy(['id' => $id]);
+         if (!$gallery) {
+             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+         }
+ 
+         $data = json_decode($request->getContent(), true);
+         $gallery->setTitle($data['title'] ?? $gallery->getTitle());
+         $gallery->setUrlImage($data['url_image'] ?? $gallery->getUrlImage());
+         $gallery->setService($data['service.id'] ?? $gallery->getService());
+ 
+         $this->manager->flush();
+
+         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
+     }
 
     /**
      * @OA\Get(
@@ -190,5 +239,40 @@ class GalleryController extends AbstractController
         $responseArray['animals'] = array_map(fn ($animal) => $animal->getId(), $gallery->getAnimals()->toArray());
 
         return new JsonResponse($responseArray, Response::HTTP_OK);
+    }
+
+     /**
+     * @OA\Delete(
+     *     path="/api/gallery/{id}",
+     *     summary="Delete Picture by ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the Picture"
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Picture deleted successfully"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Picture not found"
+     *     )
+     * )
+     */
+    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    public function delete(int $id): JsonResponse
+    {
+        $gallery = $this->repository->findOneBy(['id' => $id]);
+        if (!$gallery) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+
+        $this->manager->remove($gallery);
+        $this->manager->flush();
+
+        return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
 }
