@@ -32,7 +32,7 @@ class AnimalFeeding
     private ?int $Nourriture_grammage_emp = null;
 
     #[ORM\ManyToMany(targetEntity: Animal::class, inversedBy: 'animalFeedings')]
-    #[Groups(['animalFeeding:read', 'animal:read'])]
+    #[Groups(['animalFeeding:read'])]
     #[MaxDepth(1)]
     private Collection $Animal;
 

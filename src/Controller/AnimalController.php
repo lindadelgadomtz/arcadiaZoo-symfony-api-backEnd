@@ -189,7 +189,11 @@ class AnimalController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($animal, 'json', ['groups' => ['animal:read']]);
+        $responseData = $this->serializer->serialize($animal, 'json', 
+        [ 
+            AbstractNormalizer::GROUPS => ['animal:read', 'animal:write'],
+            //AbstractNormalizer::IGNORED_ATTRIBUTES => ['animalFeedings']
+        ]);
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 

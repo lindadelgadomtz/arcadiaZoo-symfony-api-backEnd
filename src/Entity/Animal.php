@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
-use Symfony\Component\Serializer\Annotation\Ignore;
+
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
 class Animal
@@ -33,13 +33,13 @@ class Animal
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['animal:read', 'animal:write', 'habitat:read', 'rapportVeterinaire:read', 'animalFeeding:read'])]
+    #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read', 'animalFeeding:read'])]
     #[MaxDepth(1)]
     private ?Race $race = null;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['animal:read', 'animal:write', 'habitat:read', 'rapportVeterinaire:read', 'animalFeeding:read'])]
+    #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read', 'animalFeeding:read'])]
     #[MaxDepth(1)]
     private ?Habitat $habitat = null;
 
