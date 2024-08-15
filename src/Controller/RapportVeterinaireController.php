@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\RapportVeterinaire;
 use App\Repository\RapportVeterinaireRepository;
 use App\Repository\AnimalRepository;
+use App\Repository\AnimalFeedingRepository;
 use App\Repository\RaceRepository;
 use App\Repository\HabitatRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,8 +24,9 @@ class RapportVeterinaireController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $manager,
-        private RapportVeterinaireRepository $repository,
+        private RapportVeterinaireRepository $raportVeterinaireRepository,
         private AnimalRepository $animalRepository,
+        private AnimalFeedingRepository $animalFeedingRepository,
         private RaceRepository $raceRepository,
         private HabitatRepository $habitatRepository,
         private SerializerInterface $serializer,
@@ -137,7 +139,7 @@ public function new(Request $request): JsonResponse
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
-        $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);
+        $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);
 
         if (!$rapportVeterinaire) {
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
@@ -146,6 +148,81 @@ public function new(Request $request): JsonResponse
         $responseData = $this->serializer->serialize($rapportVeterinaire, 'json');
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
+
+
+
+    // DOCUMENTATION
+    // /**
+    //  * @OA\Get(
+    //  *     path="/compareFoodLog/{animalId}/{date}",
+    //  *     summary="Comparer un rapport vétérinaire et rapport employee par ID",
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer"),
+    //  *         description="ID du animal"
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=200,
+    //  *         description="Détails du rapport vétérinaire",
+    //  *         @OA\JsonContent(
+    //  *             type="object",
+    //  *             @OA\Property(property="id", type="integer", example=1),
+    //  *             @OA\Property(property="date", type="string", format="date", example="2024-07-18"),
+    //  *             @OA\Property(property="detail", type="string", example="Détails du rapport"),
+    //  *             @OA\Property(property="animal", type="object", example={"id": 1}),
+    //  *             @OA\Property(property="etat_animal", type="string", example="État de l'animal"),
+    //  *             @OA\Property(property="nourriture", type="string", example="Type de nourriture"),
+    //  *             @OA\Property(property="nourriture_grammage", type="integer", example=500)
+    //  *         )
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=404,
+    //  *         description="Rapport vétérinaire non trouvé"
+    //  *     )
+    //  * )
+    //  */
+
+    #[Route('/compareFoodLog/{animalId}/{date}', methods: ['GET'])]
+public function compareFoodLog(int $animalId, string $date): JsonResponse
+{
+    $animal = $this->animalRepository->find($animalId);
+
+    if (!$animal) {
+        return new JsonResponse(['error' => 'Animal not found'], JsonResponse::HTTP_BAD_REQUEST);
+    }
+
+    // Retrieve records based on animal and date
+    $employeeFoodLogs = $this->animalFeedingRepository->findBy(['animal' => $animal, 'date' => new \DateTime($date)]);
+    $veterinaireRapports = $this->raportVeterinaireRepository->findBy(['animal' => $animal, 'date' => new \DateTime($date)]);
+
+    if (!$employeeFoodLogs || !$veterinaireRapports) {
+        return new JsonResponse(['error' => 'No records found for the given date'], JsonResponse::HTTP_NOT_FOUND);
+    }
+
+    // Initialize arrays to hold comparison results
+    $comparisonResults = [];
+    
+    // Loop through the veterinary reports to compare with employee logs
+    foreach ($veterinaireRapports as $veterinaireRapport) {
+        $matchingLogs = array_filter($employeeFoodLogs, function ($log) use ($veterinaireRapport) {
+            return $log->getNourriture() === $veterinaireRapport->getNourriture() &&
+                   $log->getNourritureGrammageEmp() === $veterinaireRapport->getNourritureGrammage();
+        });
+
+        $comparisonResults[] = [
+            'veterinary_report_id' => $veterinaireRapport->getId(),
+            'veterinary_food_type' => $veterinaireRapport->getNourriture(),
+            'veterinary_food_quantity' => $veterinaireRapport->getNourritureGrammage(),
+            'matching_employee_logs' => $matchingLogs
+        ];
+    }
+
+    return new JsonResponse([
+        'comparisonResults' => $comparisonResults,
+    ]);
+}
 
     /**
      * @OA\Put(
@@ -184,7 +261,7 @@ public function new(Request $request): JsonResponse
     #[Route('/{id}', name: 'edit', methods: ['PUT'])]
     public function edit(int $id, Request $request): JsonResponse
     {
-        $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);
+        $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);
         if (!$rapportVeterinaire) {
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
@@ -236,7 +313,7 @@ public function new(Request $request): JsonResponse
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
-        $rapportVeterinaire = $this->repository->findOneBy(['id' => $id]);
+        $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);
         if (!$rapportVeterinaire) {
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }

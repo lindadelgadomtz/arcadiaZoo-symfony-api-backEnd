@@ -22,17 +22,17 @@ use OpenApi\Annotations as OA;
 class AnimalFeedingController extends AbstractController
 {
     private AnimalFeedingRepository $repository;
-    private UserRepository $userRepository;
+    // private UserRepository $userRepository;
     private AnimalRepository $animalRepository;
     private SerializerInterface $serializer;
     private UrlGeneratorInterface $urlGenerator;
     private EntityManagerInterface $manager;
 
-    public function __construct(AnimalFeedingRepository $repository, AnimalRepository $animalRepository, UserRepository $userRepository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
+    public function __construct(AnimalFeedingRepository $repository, AnimalRepository $animalRepository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator)
     {
         $this->repository = $repository;
         $this->animalRepository = $animalRepository;
-        $this->userRepository = $userRepository;
+        // $this->userRepository = $userRepository;
         $this->serializer = $serializer;
         $this->manager = $manager;
         $this->urlGenerator = $urlGenerator;
@@ -96,9 +96,9 @@ class AnimalFeedingController extends AbstractController
         $nourriture = $data['nourriture'] ?? null;
         $nourritureGrammageEmp = $data['nourriture_grammage_emp'] ?? null;
         $animalId = $data['animal']['id'] ?? null;
-        $userId = $data['user']['id'] ?? null;
+        // $userId = $data['user']['id'] ?? null;
 
-        if (!$nourriture || !$nourritureGrammageEmp || !$animalId || !$userId) {
+        if (!$nourriture || !$nourritureGrammageEmp || !$animalId) {
             return new JsonResponse(['error' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -108,17 +108,17 @@ class AnimalFeedingController extends AbstractController
         $animalFeeding->setDate(new \DateTimeImmutable($data['date']));
 
         $animal = $this->animalRepository->find($animalId);
-        $user = $this->userRepository->find($userId);
+        // $user = $this->userRepository->find($userId);
 
-        if (!$animal || !$user) {
-            return new JsonResponse(['error' => 'Invalid animal or user ID'], Response::HTTP_BAD_REQUEST);
-        }
+        // if (!$animal || !$user) {
+        //     return new JsonResponse(['error' => 'Invalid animal or user ID'], Response::HTTP_BAD_REQUEST);
+        // }
 
         $animal = $this->animalRepository->find($data['animal']['id']);
         if ($animal) {
         $animalFeeding->addAnimal($animal);  // Correct way to add animal
         }
-        $animalFeeding->addUser($user);
+        // $animalFeeding->addUser($user);
 
         $this->manager->persist($animalFeeding);
         $this->manager->flush();
@@ -295,9 +295,9 @@ class AnimalFeedingController extends AbstractController
         $nourriture = $data['nourriture'] ?? null;
         $nourritureGrammageEmp = $data['nourriture_grammage_emp'] ?? null;
         $animalId = $data['animal']['id'] ?? null;
-        $userId = $data['user']['id'] ?? null;
+        // $userId = $data['user']['id'] ?? null;
 
-        if (!$nourriture || !$nourritureGrammageEmp || !$animalId || !$userId) {
+        if (!$nourriture || !$nourritureGrammageEmp || !$animalId) {
             return new JsonResponse(['error' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -306,9 +306,9 @@ class AnimalFeedingController extends AbstractController
         $animalFeeding->setDate(new \DateTimeImmutable($data['date']));
 
         $animal = $this->animalRepository->find($animalId);
-        $user = $this->userRepository->find($userId);
+        // $user = $this->userRepository->find($userId);
 
-        if (!$animal || !$user) {
+        if (!$animal) {
             return new JsonResponse(['error' => 'Invalid animal or user ID'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -316,7 +316,7 @@ class AnimalFeedingController extends AbstractController
         if ($animal) {
         $animalFeeding->addAnimal($animal);  // Correct way to add animal
         }
-        $animalFeeding->addUser($user);
+        // $animalFeeding->addUser($user);
 
         $this->manager->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);

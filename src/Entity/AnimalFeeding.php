@@ -36,21 +36,21 @@ class AnimalFeeding
     #[MaxDepth(1)]
     private Collection $Animal;
 
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'animalFeedings')]
-    #[Groups(['animalFeeding:read', 'user:read'])]
-    #[MaxDepth(1)]
-    private Collection $User;
+    // #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'animalFeedings')]
+    // #[Groups(['animalFeeding:read', 'user:read'])]
+    // #[MaxDepth(1)]
+    // private Collection $User;
 
-    #[ORM\ManyToMany(targetEntity: RapportVeterinaire::class, inversedBy: 'animalFeedings')]
-    #[Groups(['animalFeeding:read', 'rapportVeterinaire:read'])]
-    #[MaxDepth(1)]
-    private Collection $RapportVeterinaire;
+    // #[ORM\ManyToMany(targetEntity: RapportVeterinaire::class, inversedBy: 'animalFeedings')]
+    // #[Groups(['animalFeeding:read', 'rapportVeterinaire:read'])]
+    // #[MaxDepth(1)]
+    // private Collection $RapportVeterinaire;
 
     public function __construct()
     {
         $this->Animal = new ArrayCollection();
-        $this->User = new ArrayCollection();
-        $this->RapportVeterinaire = new ArrayCollection();
+        // $this->User = new ArrayCollection();
+        // $this->RapportVeterinaire = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -112,48 +112,48 @@ class AnimalFeeding
         return $this;
     }
 
-    public function getUser(): Collection
-    {
-        return $this->User;
-    }
+    // public function getUser(): Collection
+    // {
+    //     return $this->User;
+    // }
 
-    public function addUser(User $user): static
-    {
-        if (!$this->User->contains($user)) {
-            $this->User->add($user);
-        }
+    // public function addUser(User $user): static
+    // {
+    //     if (!$this->User->contains($user)) {
+    //         $this->User->add($user);
+    //     }
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
-    public function removeUser(User $user): static
-    {
-        $this->User->removeElement($user);
+    // public function removeUser(User $user): static
+    // {
+    //     $this->User->removeElement($user);
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
-    /**
-     * @return Collection<int, RapportVeterinaire>
-     */
-    public function getRapportVeterinaire(): Collection
-    {
-        return $this->RapportVeterinaire;
-    }
+    // /**
+    //  * @return Collection<int, RapportVeterinaire>
+    //  */
+    // public function getRapportVeterinaire(): Collection
+    // {
+    //     return $this->RapportVeterinaire;
+    // }
 
-    public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
-    {
-        if (!$this->RapportVeterinaire->contains($rapportVeterinaire)) {
-            $this->RapportVeterinaire->add($rapportVeterinaire);
-        }
+    // public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    // {
+    //     if (!$this->RapportVeterinaire->contains($rapportVeterinaire)) {
+    //         $this->RapportVeterinaire->add($rapportVeterinaire);
+    //     }
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
-    public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
-    {
-        $this->RapportVeterinaire->removeElement($rapportVeterinaire);
+    // public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    // {
+    //     $this->RapportVeterinaire->removeElement($rapportVeterinaire);
 
-        return $this;
-    }
+    //     return $this;
+    // }
 }
