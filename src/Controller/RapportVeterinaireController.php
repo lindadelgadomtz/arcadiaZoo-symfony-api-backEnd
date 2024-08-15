@@ -67,59 +67,42 @@ class RapportVeterinaireController extends AbstractController
      * )
      */
     #[Route(methods: ['POST'])]
-    public function new(Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
+public function new(Request $request): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
 
-        $animalId = $data['animal']['id'];
-        $animal = $this->animalRepository->find($animalId);
+    // Fetch the Animal based on the provided ID
+    $animalId = $data['animal']['id'];
+    $animal = $this->animalRepository->find($animalId);
 
-        if (!$animal) {
-            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        // Fetch the race and habitat to avoid creating new ones
-        $raceId = $data['animal']['race']['id'];
-        $race = $this->raceRepository->find($raceId);
-
-        if (!$race) {
-            return new JsonResponse(['error' => 'Race not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $habitatId = $data['animal']['habitat']['id'];
-        $habitat = $this->habitatRepository->find($habitatId);
-
-        if (!$habitat) {
-            return new JsonResponse(['error' => 'Habitat not found'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $rapportVeterinaire = new RapportVeterinaire();
-        $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
-        $rapportVeterinaire->setDetail($data['detail']);
-        $rapportVeterinaire->setEtatAnimal($data['etat_animal']);
-        $rapportVeterinaire->setNourriture($data['nourriture']);
-        $rapportVeterinaire->setNourritureGrammage($data['nourriture_grammage']);
-        $rapportVeterinaire->setAnimal($animal);
-
-        $animal->setRace($race);
-        $animal->setHabitat($habitat);
-
-        $this->manager->persist($rapportVeterinaire);
-        $this->manager->flush();
-
-        $responseData = $this->serializer->serialize($rapportVeterinaire, 'json', [
-            'groups' => ['rapportVeterinaire:read']
-
-    
-        ]);
-        $location = $this->urlGenerator->generate(
-            'app_api_rapportVeterinaire_show',
-            ['id' => $rapportVeterinaire->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-        return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+    if (!$animal) {
+        return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_BAD_REQUEST);
     }
 
+    // No need to handle Race and Habitat here, they are already associated with the Animal
+    // Simply create the RapportVeterinaire and associate it with the existing Animal
+
+    $rapportVeterinaire = new RapportVeterinaire();
+    $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
+    $rapportVeterinaire->setDetail($data['detail']);
+    $rapportVeterinaire->setEtatAnimal($data['etat_animal']);
+    $rapportVeterinaire->setNourriture($data['nourriture']);
+    $rapportVeterinaire->setNourritureGrammage($data['nourriture_grammage']);
+    $rapportVeterinaire->setAnimal($animal);
+
+    $this->manager->persist($rapportVeterinaire);
+    $this->manager->flush();
+
+    $responseData = $this->serializer->serialize($rapportVeterinaire, 'json', [
+        'groups' => ['rapportVeterinaire:read']
+    ]);
+    $location = $this->urlGenerator->generate(
+        'app_api_rapportVeterinaire_show',
+        ['id' => $rapportVeterinaire->getId()],
+        UrlGeneratorInterface::ABSOLUTE_URL
+    );
+    return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
+}
     /**
      * @OA\Get(
      *     path="/api/rapportVeterinaire/{id}",

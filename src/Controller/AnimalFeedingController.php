@@ -189,6 +189,59 @@ class AnimalFeedingController extends AbstractController
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
+/**
+     * @OA\Get(
+     *     path="/api/animalFeeding/animal/{id}",
+     *     summary="Get animalFeeding by ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the animal Feeding"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Animal details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="date", type="string", format="date", example="2024-07-18"),
+     *             @OA\Property(property="nourriture", type="string", example="Nourriture example"),
+     *             @OA\Property(property="nourriture_grammage_emp", type="int", example="500"),
+     *             @OA\Property(
+     *                 property="animal",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=8)
+     *             ),
+     *             @OA\Property(
+     *                 property="user",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Animal Feeding not found"
+     *     )
+     * )
+     */
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        $animalFeeding = $this->repository->findAll();
+
+        if (!$animalFeeding) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+
+        $responseData = $this->serializer->serialize($animalFeeding, 'json', [
+            AbstractNormalizer::GROUPS => ['animalFeeding:read']
+        ]);
+        
+        return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
+    }
+
     /**
      * @OA\Put(
      *     path="/api/animalFeeding/{id}",

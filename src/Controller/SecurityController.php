@@ -104,6 +104,7 @@ class SecurityController extends AbstractController
         }
 
         return new JsonResponse([
+            'id' => $user->getId(),
             'user' => $user->getUserIdentifier(),
             'apiToken' => $user->getApiToken(),
             'roles' => $user->getRoles(),
@@ -127,7 +128,11 @@ class SecurityController extends AbstractController
 
         $responseData = $this->serializer->serialize($user, 'json');
 
-        return new JsonResponse($responseData, Response::HTTP_OK, [], true);
+        return new JsonResponse([
+            'user' => $user->getUserIdentifier(),
+            'apiToken' => $user->getApiToken(),
+            'roles' => $user->getRoles(),
+        ], Response::HTTP_OK, [], true);
     }
 
     /**

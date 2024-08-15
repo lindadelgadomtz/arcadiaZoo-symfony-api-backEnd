@@ -41,10 +41,16 @@ class AnimalFeeding
     #[MaxDepth(1)]
     private Collection $User;
 
+    #[ORM\ManyToMany(targetEntity: RapportVeterinaire::class, inversedBy: 'animalFeedings')]
+    #[Groups(['animalFeeding:read', 'rapportVeterinaire:read'])]
+    #[MaxDepth(1)]
+    private Collection $RapportVeterinaire;
+
     public function __construct()
     {
         $this->Animal = new ArrayCollection();
         $this->User = new ArrayCollection();
+        $this->RapportVeterinaire = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,6 +129,30 @@ class AnimalFeeding
     public function removeUser(User $user): static
     {
         $this->User->removeElement($user);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, RapportVeterinaire>
+     */
+    public function getRapportVeterinaire(): Collection
+    {
+        return $this->RapportVeterinaire;
+    }
+
+    public function addRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    {
+        if (!$this->RapportVeterinaire->contains($rapportVeterinaire)) {
+            $this->RapportVeterinaire->add($rapportVeterinaire);
+        }
+
+        return $this;
+    }
+
+    public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
+    {
+        $this->RapportVeterinaire->removeElement($rapportVeterinaire);
 
         return $this;
     }
