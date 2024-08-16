@@ -49,6 +49,11 @@ class ComparisonController extends AbstractController
     public function compareFoodLog($animalId, $date, EntityManagerInterface $entityManager): JsonResponse
     {
         $animal = $entityManager->getRepository(Animal::class)->find($animalId);
+        $rawAnimalFeedings = $animal->getAnimalFeedings()->toArray();;
+
+        $animalFeedings = array_filter($rawAnimalFeedings, function (AnimalFeeding $feeding) use ($date) {
+            return $feeding->getDate()->format('Y-m-d') == $date;
+        });
     
         if (!$animal) {
             return new JsonResponse(['error' => 'Animal not found'], 404);
@@ -57,18 +62,7 @@ class ComparisonController extends AbstractController
         // Fetch the "Rapport Veterinaire" for the selected date
         $veterinaryReports = $entityManager->getRepository(RapportVeterinaire::class)
             ->findBy(['animal' => $animal, 'Date' => new \DateTimeImmutable($date)]);
-    
-        // Fetch the "Animal Feeding" logs for the selected date using a DQL query to join the animalFeedings
-        $animalFeedings = $entityManager->createQuery(
-            'SELECT af 
-             FROM App\Entity\AnimalFeeding af 
-             JOIN af.Animal a 
-             WHERE a.id = :animalId AND af.Date = :date'
-        )
-        ->setParameter('animalId', $animalId)
-        ->setParameter('date', new \DateTimeImmutable($date))
-        ->getResult();
-    
+
         // Structure the data to return as JSON
         $data = [
             'animal' => $animal->getPrenom(),
@@ -82,8 +76,10 @@ class ComparisonController extends AbstractController
             }, $veterinaryReports),
             'animalFeedings' => array_map(function ($feeding) {
                 return [
-                    'food_type' => $feeding->getNourriture(),
-                    'amount' => $feeding->getNourritureGrammageEmp(),
+                    'id' => $feeding->getId(),
+                    'date' => $feeding->getDate()->format('Y-m-d'),
+                    'nourriture' => $feeding->getNourriture(),
+                    'nourriture_grammage_emp' => $feeding->getNourritureGrammageEmp(),
                 ];
             }, $animalFeedings),
         ];

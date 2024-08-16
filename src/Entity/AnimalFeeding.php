@@ -16,19 +16,19 @@ class AnimalFeeding
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['animalFeeding:read', 'animalFeeding:write'])]
+    #[Groups(['animalFeeding:read', 'animalFeeding:write', 'animal:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['animalFeeding:read', 'animalFeeding:write'])]
+    #[Groups(['animalFeeding:read', 'animalFeeding:write', 'animal:read'])]
     private ?\DateTimeImmutable $Date = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['animalFeeding:read', 'animalFeeding:write'])]
+    #[Groups(['animalFeeding:read', 'animalFeeding:write', 'animal:read'])]
     private ?string $Nourriture = null;
 
     #[ORM\Column]
-    #[Groups(['animalFeeding:read', 'animalFeeding:write'])]
+    #[Groups(['animalFeeding:read', 'animalFeeding:write', 'animal:read'])]
     private ?int $Nourriture_grammage_emp = null;
 
     #[ORM\ManyToMany(targetEntity: Animal::class, inversedBy: 'animalFeedings')]

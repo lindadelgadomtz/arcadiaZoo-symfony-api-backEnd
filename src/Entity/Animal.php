@@ -49,7 +49,7 @@ class Animal
     private Collection $gallery;
 
     #[ORM\ManyToMany(targetEntity: AnimalFeeding::class, mappedBy: 'Animal')]
-    #[Groups(['animal:read', 'animal:write'])]
+    #[Groups(['animal:read', 'animal:write', 'animalFeeding:write'])]
     #[MaxDepth(1)]
     private Collection $animalFeedings;
 
