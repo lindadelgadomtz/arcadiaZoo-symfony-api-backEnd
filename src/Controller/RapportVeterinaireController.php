@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use OpenApi\Annotations as OA;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface; // or DenormalizerInterface if needed
 
+
 #[Route('api/rapportVeterinaire', name: 'app_api_rapportVeterinaire_')]
 class RapportVeterinaireController extends AbstractController
 {
@@ -149,79 +150,16 @@ public function new(Request $request): JsonResponse
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
-
-
-    // DOCUMENTATION
-    // /**
-    //  * @OA\Get(
-    //  *     path="/compareFoodLog/{animalId}/{date}",
-    //  *     summary="Comparer un rapport vétérinaire et rapport employee par ID",
-    //  *     @OA\Parameter(
-    //  *         name="id",
-    //  *         in="path",
-    //  *         required=true,
-    //  *         @OA\Schema(type="integer"),
-    //  *         description="ID du animal"
-    //  *     ),
-    //  *     @OA\Response(
-    //  *         response=200,
-    //  *         description="Détails du rapport vétérinaire",
-    //  *         @OA\JsonContent(
-    //  *             type="object",
-    //  *             @OA\Property(property="id", type="integer", example=1),
-    //  *             @OA\Property(property="date", type="string", format="date", example="2024-07-18"),
-    //  *             @OA\Property(property="detail", type="string", example="Détails du rapport"),
-    //  *             @OA\Property(property="animal", type="object", example={"id": 1}),
-    //  *             @OA\Property(property="etat_animal", type="string", example="État de l'animal"),
-    //  *             @OA\Property(property="nourriture", type="string", example="Type de nourriture"),
-    //  *             @OA\Property(property="nourriture_grammage", type="integer", example=500)
-    //  *         )
-    //  *     ),
-    //  *     @OA\Response(
-    //  *         response=404,
-    //  *         description="Rapport vétérinaire non trouvé"
-    //  *     )
-    //  * )
-    //  */
-
-    #[Route('/compareFoodLog/{animalId}/{date}', methods: ['GET'])]
-public function compareFoodLog(int $animalId, string $date): JsonResponse
+#[Route('/getAnimalIdByName/{prenom}', methods: ['GET'])]
+public function getAnimalIdByName(string $prenom): JsonResponse
 {
-    $animal = $this->animalRepository->find($animalId);
+    $animal = $this->animalRepository->findOneBy(['prenom' => $prenom]);
 
     if (!$animal) {
-        return new JsonResponse(['error' => 'Animal not found'], JsonResponse::HTTP_BAD_REQUEST);
+        return new JsonResponse(['error' => 'Animal not found'], JsonResponse::HTTP_NOT_FOUND);
     }
 
-    // Retrieve records based on animal and date
-    $employeeFoodLogs = $this->animalFeedingRepository->findBy(['animal' => $animal, 'date' => new \DateTime($date)]);
-    $veterinaireRapports = $this->raportVeterinaireRepository->findBy(['animal' => $animal, 'date' => new \DateTime($date)]);
-
-    if (!$employeeFoodLogs || !$veterinaireRapports) {
-        return new JsonResponse(['error' => 'No records found for the given date'], JsonResponse::HTTP_NOT_FOUND);
-    }
-
-    // Initialize arrays to hold comparison results
-    $comparisonResults = [];
-    
-    // Loop through the veterinary reports to compare with employee logs
-    foreach ($veterinaireRapports as $veterinaireRapport) {
-        $matchingLogs = array_filter($employeeFoodLogs, function ($log) use ($veterinaireRapport) {
-            return $log->getNourriture() === $veterinaireRapport->getNourriture() &&
-                   $log->getNourritureGrammageEmp() === $veterinaireRapport->getNourritureGrammage();
-        });
-
-        $comparisonResults[] = [
-            'veterinary_report_id' => $veterinaireRapport->getId(),
-            'veterinary_food_type' => $veterinaireRapport->getNourriture(),
-            'veterinary_food_quantity' => $veterinaireRapport->getNourritureGrammage(),
-            'matching_employee_logs' => $matchingLogs
-        ];
-    }
-
-    return new JsonResponse([
-        'comparisonResults' => $comparisonResults,
-    ]);
+    return new JsonResponse(['id' => $animal->getId(), 'name' => $animal->getPrenom()]);
 }
 
     /**
