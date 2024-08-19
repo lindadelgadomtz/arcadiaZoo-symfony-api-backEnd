@@ -55,12 +55,12 @@ class RaceController extends AbstractController
             $request->getContent(),
             Race::class,
             'json',
-            ['groups' => ['race:write']]
+            ['groups' => ['race:read', 'race:write']]
         );
-
+    
         $this->manager->persist($race);
         $this->manager->flush();
-
+    
         $responseData = $this->serializer->serialize($race, 'json', ['groups' => ['race:read']]);
         $location = $this->urlGenerator->generate(
             'app_api_race_show',

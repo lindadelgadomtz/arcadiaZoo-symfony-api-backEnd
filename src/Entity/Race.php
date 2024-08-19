@@ -17,8 +17,8 @@ class Race
     #[Groups(['race:read', 'animal:read', 'animal:write'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50)]
-    #[Groups(['race:read', 'animal:read', 'animal:write'])]
+    #[ORM\Column(type: 'string', length: 50, nullable: false)]
+    #[Groups(['race:read', 'race: write', 'animal:read', 'animal:write'])]
     private ?string $label = null;
 
     #[ORM\OneToMany(mappedBy: 'race', targetEntity: Animal::class)]
