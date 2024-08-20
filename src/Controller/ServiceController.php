@@ -120,6 +120,68 @@ class ServiceController extends AbstractController
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 
+        /**
+     * @OA\Get(
+     *     path="/api/service",
+     *     summary="Get all service",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the service"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Service details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="nom", type="string", example="Nom du service"),
+     *             @OA\Property(property="description", type="string", example="Description du service"),
+     *             @OA\Property(property="createdAt", type="string", format="date-time", example="2024-07-18T14:30:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Services not found"
+     *     )
+     * )
+     */
+
+
+
+
+    // DOCUMENTATION
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        $services = $this->repository->findAll();
+    
+        if (!$services) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+    
+        $responseArray = [];
+        foreach ($services as $service) {
+            // Get gallery ID for the service
+            $gallery = $service->getGallery();
+            $galleryId = $gallery ? $gallery->getUrlImage() : null;
+    
+            // Serialize each service
+            $serializedService = $this->serializer->serialize($service, 'json', ['groups' => ['service:read', 'service:write']]);
+            // Decoding serialized data to add gallery_id and custom fields
+            $serviceArray = json_decode($serializedService, true); // CHANGE: Decode serialized data
+            $serviceArray['gallery'] = $galleryId; // CHANGE: Add gallery ID to the array
+    
+            $responseArray[] = $serviceArray;
+        }
+    
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK); // CHANGE: Return responseArray instead of services
+    }
+    
+    
+
     /**
      * @OA\Put(
      *     path="/api/service/{id}",

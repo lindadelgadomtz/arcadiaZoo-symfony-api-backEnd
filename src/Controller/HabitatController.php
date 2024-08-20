@@ -128,7 +128,75 @@ class HabitatController extends AbstractController
 
         // Decode the serialized data to add gallery_ids
         $responseArray = json_decode($responseData, true);
-        $responseArray['Gallery'] = $galleryIds;
+
+        $responseArray['gallery'] = $galleryIds;
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
+    }
+
+
+    //  /**
+    //  * @OA\Get(
+    //  *     path="/api/habitat",
+    //  *     summary="Get all habitats by ID",
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer"),
+    //  *         description="ID of the habitats"
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=200,
+    //  *         description="All habitat details",
+    //  *         @OA\JsonContent(
+    //  *             type="object",
+    //  *             @OA\Property(property="id", type="integer", example=1),
+    //  *             @OA\Property(property="nom", type="string", example="Forest"),
+    //  *             @OA\Property(property="description", type="string", example="A large forest"),
+    //  *             @OA\Property(property="commentaire_habitat", type="string", example="This is a comment"),
+    //  *             @OA\Property(property="gallery_ids", type="array", @OA\Items(type="integer")),
+    //  *             @OA\Property(property="animal_ids", type="array", @OA\Items(type="integer")), 
+    //  *         )
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=404,
+    //  *         description="Habitats not found"
+    //  *     )
+    //  * )
+    //  */
+
+
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        
+        $habitats = $this->repository->findAll();
+
+        if (!$habitats) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+
+        $responseArray = [];
+        foreach ($habitats as $habitat) {
+            // Get gallery IDs for each habitat
+            $galleryIds = [];
+            foreach ($habitat->getGallery() as $gallery) {
+                $galleryIds[] = $gallery->getUrlImage();
+            }
+
+            // Serialize each habitat
+            $serializedHabitat = $this->serializer->serialize($habitat, 'json', [
+                AbstractNormalizer::GROUPS => ['habitat:read', 'habitat:write'], 
+            ]);
+
+            // Decode serialized data to add gallery_ids and custom fields
+            $habitatArray = json_decode($serializedHabitat, true);
+            $habitatArray['gallery'] = $galleryIds;
+            $habitatArray['url_image'] = $habitat->getGallery();
+
+            $responseArray[] = $habitatArray;
+        }
 
         return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
     }

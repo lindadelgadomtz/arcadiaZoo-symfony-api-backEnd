@@ -3,9 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -13,12 +16,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['animalFeeding:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['animalFeeding:read'])]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['animalFeeding:read'])]
     private array $roles = [];
 
     /**
@@ -36,10 +42,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $apiToken = null;
 
+    #[ORM\ManyToMany(targetEntity: AnimalFeeding::class, mappedBy: 'User')]
+    private Collection $animalFeedings;
+
 /** @throws \Exception */
     public function __construct()
     {
         $this->apiToken = bin2hex(random_bytes(60));
+        $this->animalFeedings = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -163,6 +173,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setApiToken(string $apiToken): static
     {
         $this->apiToken = $apiToken;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AnimalFeeding>
+     */
+    public function getAnimalFeedings(): Collection
+    {
+        return $this->animalFeedings;
+    }
+
+    public function addAnimalFeeding(AnimalFeeding $animalFeeding): static
+    {
+        if (!$this->animalFeedings->contains($animalFeeding)) {
+            $this->animalFeedings->add($animalFeeding);
+            $animalFeeding->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAnimalFeeding(AnimalFeeding $animalFeeding): static
+    {
+        if ($this->animalFeedings->removeElement($animalFeeding)) {
+            $animalFeeding->removeUser($this);
+        }
 
         return $this;
     }

@@ -113,9 +113,108 @@ class AnimalController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($animal, 'json');
+        // Get gallery IDs
+        $galleryIds = [];
+        foreach ($animal->getGallery() as $gallery) {
+            $galleryIds[] = $gallery->getId();
+        }
+
+        // Prepare the response data including the gallery IDs
+        $responseData = $this->serializer->serialize($animal, 'json', [
+            AbstractNormalizer::GROUPS => ['animal:read', 'animal:write'],
+        ]);
+
+        // Decode the serialized data to add gallery_ids
+        $responseArray = json_decode($responseData, true);
+        $responseArray['gallery'] = $galleryIds;
+
+        return new JsonResponse(data: $responseArray, status: Response::HTTP_OK);
+    }
+
+    // DOCUMENTATION
+    #[Route(methods: 'GET')]
+    public function showAll(): JsonResponse
+    {
+        $animal = $this->repository->findAll();
+
+        if (!$animal) {
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
+        }
+
+        $responseData = $this->serializer->serialize($animal, 'json', 
+        [ 
+            AbstractNormalizer::GROUPS => ['animal:read', 'animal:write'],
+            //AbstractNormalizer::IGNORED_ATTRIBUTES => ['animalFeedings']
+        ]);
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
+
+
+ /**
+     * @OA\Get(
+     *     path="/api/animal/habitat/{habitatId}",
+     *     summary="Get animals by habitat ID",
+     *     @OA\Parameter(
+     *         name="habitatId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the habitat"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of animals in the habitat",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="prenom", type="string", example="Sophie"),
+     *                 @OA\Property(property="etat", type="string", example="bonne"),
+     *                 @OA\Property(property="race", type="object", @OA\Property(property="id", type="integer", example=8)),
+     *                 @OA\Property(property="habitat", type="object", @OA\Property(property="id", type="integer", example=1))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Habitat not found"
+     *     )
+     * )
+     */
+    
+     #[Route('/habitat/{habitatId}', name: 'show_by_habitat', methods: ['GET'])]
+    public function showByHabitat(int $habitatId): JsonResponse
+    {
+        $habitat = $this->habitatRepository->find($habitatId);
+
+        if (!$habitat) {
+            return new JsonResponse(['error' => 'Habitat not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $animals = $this->repository->findBy(['habitat' => $habitat]);
+
+        // Prepare the response data including the gallery IDs for each animal
+        $responseData = [];
+        foreach ($animals as $animal) {
+            $galleryIds = [];
+            foreach ($animal->getGallery() as $gallery) {
+                $galleryIds[] = $gallery->getUrlImage();
+            }
+
+            $animalData = $this->serializer->serialize($animal, 'json', [
+                AbstractNormalizer::GROUPS => ['animal:read', 'animal:write'],
+            ]);
+            
+            $animalArray = json_decode($animalData, true);
+            $animalArray['gallery'] = $galleryIds;
+
+            $responseData[] = $animalArray;
+        }
+
+        return new JsonResponse($responseData, Response::HTTP_OK, []);
+    }
+
 
     /**
      * Update an animal by ID.

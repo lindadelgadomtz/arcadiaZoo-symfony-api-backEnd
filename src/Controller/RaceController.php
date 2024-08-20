@@ -54,13 +54,18 @@ class RaceController extends AbstractController
         $race = $this->serializer->deserialize(
             $request->getContent(),
             Race::class,
-            'json'
-        );
 
+            'json',
+            ['groups' => ['race:read', 'race:write']]
+
+        );
+    
         $this->manager->persist($race);
         $this->manager->flush();
 
-        $responseData = $this->serializer->serialize($race, 'json');
+    
+        $responseData = $this->serializer->serialize($race, 'json', ['groups' => ['race:read']]);
+
         $location = $this->urlGenerator->generate(
             'app_api_race_show',
             ['id' => $race->getId()],
