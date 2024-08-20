@@ -6,8 +6,6 @@ use App\Repository\AnimalRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 
 #[ORM\Entity(repositoryClass: AnimalRepository::class)]
@@ -16,6 +14,7 @@ class Animal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+
     #[Groups(['animal:read', 'animal:write', 'habitat:read', 'rapportVeterinaire:read', 'animalFeeding:read'])]
     private ?int $id = null;
 
@@ -25,20 +24,23 @@ class Animal
 
     #[ORM\Column(length: 50)]
     #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read', 'animalFeeding:read'])]
+
     private ?string $etat = null;
 
-    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class, cascade: ["persist"], orphanRemoval: true)]
-    #[MaxDepth(1)]
+    #[ORM\OneToMany(mappedBy: 'animal', targetEntity: RapportVeterinaire::class, cascade: ["persist"])]
     private Collection $rapportVeterinaires;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
+
     #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read', 'animalFeeding:read'])]
     #[MaxDepth(1)]
+
     private ?Race $race = null;
 
     #[ORM\ManyToOne(inversedBy: 'animals', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false)]
+
     #[Groups(['animal:read', 'animal:write', 'rapportVeterinaire:read', 'animalFeeding:read'])]
     #[MaxDepth(1)]
     private ?Habitat $habitat = null;
@@ -58,6 +60,7 @@ class Animal
         $this->rapportVeterinaires = new ArrayCollection();
         $this->gallery = new ArrayCollection();
         $this->animalFeedings = new ArrayCollection();
+
     }
 
     public function getId(): ?int
@@ -73,6 +76,7 @@ class Animal
     public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
+
         return $this;
     }
 
@@ -84,6 +88,7 @@ class Animal
     public function setEtat(string $etat): static
     {
         $this->etat = $etat;
+
         return $this;
     }
 
@@ -98,16 +103,19 @@ class Animal
             $this->rapportVeterinaires->add($rapportVeterinaire);
             $rapportVeterinaire->setAnimal($this);
         }
+
         return $this;
     }
 
     public function removeRapportVeterinaire(RapportVeterinaire $rapportVeterinaire): static
     {
         if ($this->rapportVeterinaires->removeElement($rapportVeterinaire)) {
+
             if ($rapportVeterinaire->getAnimal() === $this) {
                 $rapportVeterinaire->setAnimal(null);
             }
         }
+
         return $this;
     }
 
@@ -119,6 +127,7 @@ class Animal
     public function setRace(?Race $race): static
     {
         $this->race = $race;
+
         return $this;
     }
 
@@ -130,30 +139,33 @@ class Animal
     public function setHabitat(?Habitat $habitat): static
     {
         $this->habitat = $habitat;
+
         return $this;
     }
+
 
     public function getGallery(): Collection
+
     {
-        return $this->gallery;
+        return $this->images;
     }
 
-    public function setGallery(Gallery $gallery): static
+    public function addImage(Image $image): static
     {
-        if (!$this->gallery->contains($gallery)) {
-            $this->gallery->add($gallery);
-            $gallery->setAnimal($this); 
+        if (!$this->images->contains($image)) {
+            $this->images->add($image);
+            $image->addAnimal($this);
         }
+
         return $this;
     }
 
-    public function removeGallery(Gallery $gallery): static
+    public function removeImage(Image $image): static
     {
-        if ($this->gallery->removeElement($gallery)) {
-            if ($gallery->getAnimals() === $this) {
-                $gallery->setAnimal($this);
-            }
+        if ($this->images->removeElement($image)) {
+            $image->removeAnimal($this);
         }
+
         return $this;
     }
 
@@ -181,3 +193,4 @@ class Animal
         return $this;
     }
 }
+

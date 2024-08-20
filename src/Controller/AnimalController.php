@@ -4,126 +4,80 @@ namespace App\Controller;
 
 use App\Entity\Animal;
 use App\Repository\AnimalRepository;
-use App\Repository\RaceRepository;
-use App\Repository\HabitatRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
 use OpenApi\Annotations as OA;
 
 #[Route('api/animal', name: 'app_api_animal_')]
 class AnimalController extends AbstractController
 {
-    private AnimalRepository $repository;
-    private SerializerInterface $serializer;
-    private HabitatRepository $habitatRepository;
-    private UrlGeneratorInterface $urlGenerator;
-    private EntityManagerInterface $manager;
-    private RaceRepository $raceRepository;
-
-    public function __construct(AnimalRepository $repository, SerializerInterface $serializer, EntityManagerInterface $manager, UrlGeneratorInterface $urlGenerator, RaceRepository $raceRepository, HabitatRepository $habitatRepository)
-    {
-        $this->repository = $repository;
-        $this->serializer = $serializer;
-        $this->manager = $manager;
-        $this->urlGenerator = $urlGenerator;
-        $this->raceRepository = $raceRepository;
-        $this->habitatRepository = $habitatRepository;
+    public function __construct(
+        private EntityManagerInterface $manager,
+        private AnimalRepository $repository,
+        private SerializerInterface $serializer,
+        private UrlGeneratorInterface $urlGenerator,
+    ) {
     }
 
     /**
+     * Create a new animal.
+     *
      * @OA\Post(
      *     path="/api/animal",
-     *     summary="Create a new animal",
+     *     summary="Enregistrement d'un nouvel animal",
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Données de l'animal à enregistrer",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="prenom", type="string", example="Sophie"),
-     *             @OA\Property(property="etat", type="string", example="bonne"),
-     *             @OA\Property(
-     *                 property="race",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=8)
-     *             ),
-     *             @OA\Property(
-     *                 property="habitat",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1)
-     *             )
+     *             @OA\Property(property="prenom", type="string", example="Prenom de l'animal"),
+     *             @OA\Property(property="état", type="string", example="Etat de l'animal")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Animal created successfully",
+     *         description="Animal enregistre avec succès",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="prenom", type="string", example="Sophie"),
-     *             @OA\Property(property="etat", type="string", example="bonne")
+     *             @OA\Property(property="prenom", type="string", example="Prenom de l'animal"),
+     *             @OA\Property(property="état", type="string", example="Etat de l'animal"),
+     *             @OA\Property(property="race", type="array", @OA\Items(type="string", example="RACE_ID"))
      *         )
      *     )
      * )
      */
-    #[Route(methods: ['POST'])]
+    #[Route(methods: 'POST')]
     public function new(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $animal = $this->serializer->deserialize(
+            $request->getContent(),
+            Animal::class,
+            'json'
+        );
 
-        if (!$data) {
-            return new JsonResponse(['error' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $prenom = $data['prenom'] ?? null;
-        $etat = $data['etat'] ?? null;
-        $raceData = $data['race'] ?? null;
-        $habitatData = $data['habitat'] ?? null;
-
-        if (!$prenom || !$etat || !$raceData || !$habitatData || !isset($raceData['id']) || !isset($habitatData['id'])) {
-            return new JsonResponse(['error' => 'Missing required fields or IDs'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $animal = new Animal();
-        $animal->setPrenom($prenom);
-        $animal->setEtat($etat);
-
-        $race = $this->raceRepository->find($raceData['id']);
-        if ($race) {
-            $animal->setRace($race);
-        } else {
-            return new JsonResponse(['error' => 'Invalid race ID: ' . $raceData['id']], Response::HTTP_BAD_REQUEST);
-        }
-
-        $habitat = $this->habitatRepository->find($habitatData['id']);
-        if ($habitat) {
-            $animal->setHabitat($habitat);
-        } else {
-            return new JsonResponse(['error' => 'Invalid habitat ID: ' . $habitatData['id']], Response::HTTP_BAD_REQUEST);
-        }
-
+        // Tell Doctrine you want to (eventually) save the animals (no queries yet) 
         $this->manager->persist($animal);
+        // Actually executes the queries (i.e. the INSERT query)
         $this->manager->flush();
 
-        $responseData = $this->serializer->serialize($animal, 'json', [
-            AbstractNormalizer::GROUPS => ['animal:read']
-        ]);
-
+        $responseData = $this->serializer->serialize($animal, 'json');
         $location = $this->urlGenerator->generate(
             'app_api_animal_show',
             ['id' => $animal->getId()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
-
         return new JsonResponse($responseData, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
     /**
+     * Get details of an animal by ID.
+     *
      * @OA\Get(
      *     path="/api/animal/{id}",
      *     summary="Get animal by ID",
@@ -139,11 +93,9 @@ class AnimalController extends AbstractController
      *         description="Animal details",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="prenom", type="string", example="Sophie"),
-     *             @OA\Property(property="etat", type="string", example="bonne"),
-     *             @OA\Property(property="race", type="object", @OA\Property(property="id", type="integer", example=8)),
-     *             @OA\Property(property="habitat", type="object", @OA\Property(property="id", type="integer", example=1))
+     *             @OA\Property(property="prenom", type="string", example="Prenom de l'animal"),
+     *             @OA\Property(property="état", type="string", example="Etat de l'animal"),
+     *             @OA\Property(property="race", type="array", @OA\Items(type="string", example="RACE_ID"))
      *         )
      *     ),
      *     @OA\Response(
@@ -152,7 +104,7 @@ class AnimalController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', methods: 'GET')]
     public function show(int $id): JsonResponse
     {
         $animal = $this->repository->findOneBy(['id' => $id]);
@@ -265,6 +217,8 @@ class AnimalController extends AbstractController
 
 
     /**
+     * Update an animal by ID.
+     *
      * @OA\Put(
      *     path="/api/animal/{id}",
      *     summary="Update animal by ID",
@@ -279,18 +233,9 @@ class AnimalController extends AbstractController
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="prenom", type="string", example="Sophie"),
-     *             @OA\Property(property="etat", type="string", example="bonne"),
-     *             @OA\Property(
-     *                 property="race",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=8)
-     *             ),
-     *             @OA\Property(
-     *                 property="habitat",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1)
-     *             )
+     *             @OA\Property(property="prenom", type="string", example="Prenom de l'animal"),
+     *             @OA\Property(property="état", type="string", example="Etat de l'animal"),
+     *             @OA\Property(property="race", type="array", @OA\Items(type="string", example="RACE_ID"))
      *         )
      *     ),
      *     @OA\Response(
@@ -303,37 +248,21 @@ class AnimalController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
-    public function edit(int $id, Request $request): JsonResponse
+    #[Route('/{id}', name: 'edit', methods: 'PUT')]
+    public function edit(int $id): JsonResponse
     {
-        $animal = $this->repository->find($id);
+        $animal = $this->repository->findOneBy(['id' => $id]);
         if (!$animal) {
-            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_NOT_FOUND);
+            $this->manager->flush();
+            return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $animal->setPrenom($data['prenom'] ?? $animal->getPrenom());
-        $animal->setEtat($data['etat'] ?? $animal->getEtat());
-
-        if (isset($data['race']['id'])) {
-            $race = $this->raceRepository->find($data['race']['id']);
-            if ($race) {
-                $animal->setRace($race);
-            }
-        }
-
-        if (isset($data['habitat']['id'])) {
-            $habitat = $this->habitatRepository->find($data['habitat']['id']);
-            if ($habitat) {
-                $animal->setHabitat($habitat);
-            }
-        }
-
-        $this->manager->flush();
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
     }
 
     /**
+     * Delete an animal by ID.
+     *
      * @OA\Delete(
      *     path="/api/animal/{id}",
      *     summary="Delete animal by ID",
@@ -354,17 +283,17 @@ class AnimalController extends AbstractController
      *     )
      * )
      */
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
-        $animal = $this->repository->find($id);
+        $animal = $this->repository->findOneBy(['id' => $id]);
         if (!$animal) {
-            return new JsonResponse(['error' => 'Animal not found'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
         $this->manager->remove($animal);
         $this->manager->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
 }
