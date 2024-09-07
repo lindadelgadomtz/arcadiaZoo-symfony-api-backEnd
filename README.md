@@ -30,7 +30,7 @@ $ composer install
     - Set up the database:
     Create a .env.local file and configure your database connection:
 ```bash
-$ DATABASE_URL="mysql://adminArcadia:arcadia123$@127.0.0.1:8889/sf_arcadia"
+$ DATABASE_URL="mysql://username:password@127.0.0.1:8889/sf_arcadia"
 ```
      - Create the database and run migrations:
 ```bash
