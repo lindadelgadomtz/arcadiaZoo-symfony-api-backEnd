@@ -17,7 +17,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use OpenApi\Annotations as OA;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface; // or DenormalizerInterface if needed
 
 
 #[Route('api/rapportVeterinaire', name: 'app_api_rapportVeterinaire_')]
@@ -31,8 +30,7 @@ class RapportVeterinaireController extends AbstractController
         private RaceRepository $raceRepository,
         private HabitatRepository $habitatRepository,
         private SerializerInterface $serializer,
-        private UrlGeneratorInterface $urlGenerator,
-        private NormalizerInterface $normalizer, // or DenormalizerInterface if needed
+        private UrlGeneratorInterface $urlGenerator
     ) {
     }
 
@@ -69,6 +67,7 @@ class RapportVeterinaireController extends AbstractController
      *     )
      * )
      */
+
     #[Route(methods: ['POST'])]
 public function new(Request $request): JsonResponse
 {
@@ -85,6 +84,7 @@ public function new(Request $request): JsonResponse
     // No need to handle Race and Habitat here, they are already associated with the Animal
     // Simply create the RapportVeterinaire and associate it with the existing Animal
 
+
     $rapportVeterinaire = new RapportVeterinaire();
     $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
     $rapportVeterinaire->setDetail($data['detail']);
@@ -95,6 +95,7 @@ public function new(Request $request): JsonResponse
 
     $this->manager->persist($rapportVeterinaire);
     $this->manager->flush();
+
 
     $responseData = $this->serializer->serialize($rapportVeterinaire, 'json', [
         'groups' => ['rapportVeterinaire:read']
@@ -137,7 +138,7 @@ public function new(Request $request): JsonResponse
      *     )
      * )
      */
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', methods: 'GET')]
     public function show(int $id): JsonResponse
     {
         $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);
@@ -196,7 +197,7 @@ public function getAnimalIdByName(string $prenom): JsonResponse
      *     )
      * )
      */
-    #[Route('/{id}', name: 'edit', methods: ['PUT'])]
+    #[Route('/{id}', name: 'edit', methods: 'PUT')]
     public function edit(int $id, Request $request): JsonResponse
     {
         $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);
@@ -205,25 +206,12 @@ public function getAnimalIdByName(string $prenom): JsonResponse
         }
 
         $data = json_decode($request->getContent(), true);
-
         $rapportVeterinaire->setDate(new \DateTimeImmutable($data['date']));
         $rapportVeterinaire->setDetail($data['detail']);
-        $rapportVeterinaire->setEtatAnimal($data['etat_animal']);
-        $rapportVeterinaire->setNourriture($data['nourriture']);
-        $rapportVeterinaire->setNourritureGrammage($data['nourriture_grammage']);
-
-        // If updating the associated animal, race, or habitat, make sure to handle that accordingly.
-        // For example, you might want to update these associations based on new data.
-        if (isset($data['animal']['id'])) {
-            $animalId = $data['animal']['id'];
-            $animal = $this->animalRepository->find($animalId);
-            if ($animal) {
-                $rapportVeterinaire->setAnimal($animal);
-            }
-        }
+        // Update animal association if needed
+        // $rapportVeterinaire->setAnimal($animal);
 
         $this->manager->flush();
-
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
 
@@ -248,7 +236,7 @@ public function getAnimalIdByName(string $prenom): JsonResponse
      *     )
      * )
      */
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', methods: 'DELETE')]
     public function delete(int $id): JsonResponse
     {
         $rapportVeterinaire = $this->raportVeterinaireRepository->findOneBy(['id' => $id]);

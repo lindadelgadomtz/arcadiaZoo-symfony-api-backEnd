@@ -30,7 +30,9 @@ $ composer install
     - Set up the database:
     Create a .env.local file and configure your database connection:
 ```bash
+
 $ DATABASE_URL="mysql://user:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/r1kou6d4xdy6q9er"
+
 ```
      - Create the database and run migrations:
 ```bash

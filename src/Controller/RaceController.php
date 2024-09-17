@@ -54,14 +54,18 @@ class RaceController extends AbstractController
         $race = $this->serializer->deserialize(
             $request->getContent(),
             Race::class,
+
             'json',
             ['groups' => ['race:read', 'race:write']]
+
         );
     
         $this->manager->persist($race);
         $this->manager->flush();
+
     
         $responseData = $this->serializer->serialize($race, 'json', ['groups' => ['race:read']]);
+
         $location = $this->urlGenerator->generate(
             'app_api_race_show',
             ['id' => $race->getId()],
@@ -105,21 +109,7 @@ class RaceController extends AbstractController
             return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
         }
 
-        $responseData = $this->serializer->serialize($race, 'json', ['groups' => ['race:read']]);
-        return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
-    }
-
-    // DOCUMENTATION
-    #[Route(methods: 'GET')]
-    public function showAll(): JsonResponse
-    {
-        $race = $this->repository->findAll();
-
-        if (!$race) {
-            return new JsonResponse(data: null, status: Response::HTTP_NOT_FOUND);
-        }
-
-        $responseData = $this->serializer->serialize($race, 'json', ['groups' => ['race:read']]);
+        $responseData = $this->serializer->serialize($race, 'json');
         return new JsonResponse(data: $responseData, status: Response::HTTP_OK, json: true);
     }
 

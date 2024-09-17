@@ -6,23 +6,22 @@ use App\Repository\RaceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: RaceRepository::class)]
 class Race
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    #[Groups(['race:read', 'animal:read', 'animal:write'])]
+    #[ORM\Column]
     private ?int $id = null;
+
 
     #[ORM\Column(type: 'string', length: 50, nullable: false)]
     #[Groups(['race:read', 'race: write', 'animal:read', 'animal:write'])]
+
     private ?string $label = null;
 
     #[ORM\OneToMany(mappedBy: 'race', targetEntity: Animal::class)]
-    #[Groups(['race:read'])]
     private Collection $animals;
 
     public function __construct()
@@ -40,9 +39,10 @@ class Race
         return $this->label;
     }
 
-    public function setLabel(string $label): self
+    public function setLabel(string $label): static
     {
         $this->label = $label;
+
         return $this;
     }
 
@@ -54,7 +54,7 @@ class Race
         return $this->animals;
     }
 
-    public function addAnimal(Animal $animal): self
+    public function addAnimal(Animal $animal): static
     {
         if (!$this->animals->contains($animal)) {
             $this->animals->add($animal);
@@ -64,7 +64,7 @@ class Race
         return $this;
     }
 
-    public function removeAnimal(Animal $animal): self
+    public function removeAnimal(Animal $animal): static
     {
         if ($this->animals->removeElement($animal)) {
             // set the owning side to null (unless already changed)
