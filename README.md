@@ -30,7 +30,8 @@ $ composer install
     - Set up the database:
     Create a .env.local file and configure your database connection:
 ```bash
-$ DATABASE_URL="mysql://username:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/r1kou6d4xdy6q9er"
+
+$ DATABASE_URL="mysql://user:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/r1kou6d4xdy6q9er"
 
 ```
      - Create the database and run migrations:
@@ -38,6 +39,7 @@ $ DATABASE_URL="mysql://username:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-
 $ php bin/console doctrine:database:create
 $ php bin/console doctrine:migrations:migrate
 $ php bin/console doctrine:fixtures:load
+
 
 ```
      - Run the Symfony server:
