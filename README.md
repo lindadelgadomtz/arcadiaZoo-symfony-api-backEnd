@@ -64,6 +64,11 @@ $ bin/console debug:...
 
 ### Entity Details
 
+### Charte Graphique 
+https://drive.google.com/file/d/1pPi4ywtTDsGDimJgsyypTToWovPrzXjR/view?usp=drive_link 
+
+### Gestion de Projet
+https://drive.google.com/file/d/11YmszxKrjBtHI65CgrmEwnlglsJjv3Mz/view?usp=drive_link
 
 ### License 
 This project is licensed under the MIT License. See the LICENSE file for more details. 
