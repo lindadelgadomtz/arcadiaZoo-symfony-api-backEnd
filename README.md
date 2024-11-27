@@ -16,6 +16,7 @@
     - Composer
     - Symfony CLI (optional but recommended)
     - MySQL or any other database supported by Doctrine ORM
+    - MongoDB
 
 - Steps
 
@@ -27,11 +28,12 @@ $ git clone https://github.com/lindadelgadomtz/arcadiaZoo-symfony-api-backEnd.gi
 ```bash
 $ composer install
 ```
-    - Set up the database:
+    - Set up the databases:
     Create a .env.local file and configure your database connection:
 ```bash
 
 $ DATABASE_URL="mysql://user:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/r1kou6d4xdy6q9er"
+$ MONGODB=mongodb+srv://arcadiazooad:<db_password>@cluster0.lsfjn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
 ```
      - Create the database and run migrations:
@@ -39,6 +41,8 @@ $ DATABASE_URL="mysql://user:password@tj5iv8piornf713y.cbetxkdyhwsb.us-east-1.rd
 $ php bin/console doctrine:database:create
 $ php bin/console doctrine:migrations:migrate
 $ php bin/console doctrine:fixtures:load
+$ composer require mongodb/mongodb
+
 
 
 ```

@@ -1,3 +1,7 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
+animal_consult:
+    path: /animal/consult/{name}
+    controller: App\Controller\AnimalController::consultAnimal
+    methods: POST

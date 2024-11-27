@@ -15,6 +15,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use OpenApi\Annotations as OA;
+use App\Service\AnimalService;
+use MongoDB\Client;
 
 #[Route('api/animal', name: 'app_api_animal_')]
 class AnimalController extends AbstractController
@@ -25,8 +27,50 @@ class AnimalController extends AbstractController
         private SerializerInterface $serializer,
         private UrlGeneratorInterface $urlGenerator,
         private HabitatRepository $habitatRepository,
+        private AnimalService $animalService,
     ) {
     }
+
+
+    /**
+     * Increment the consultation count of an animal.
+     *
+     * @OA\Post(
+     *     path="/api/animal/consult/{name}",
+     *     summary="Increment animal consultation count",
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string"),
+     *         description="Name of the animal"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Animal consultation count updated",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Consultation count updated for Médor")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Animal not found"
+     *     )
+     * )
+     */
+    #[Route('/consult/{name}', name: 'consult', methods: ['POST'])]
+    public function incrementConsultationCount(string $name): JsonResponse
+    {
+        // Use AnimalService to update consultation count in MongoDB
+        try {
+            $this->animalService->incrementConsultationCount($name);
+            return new JsonResponse(['message' => "Consultation count updated for $name"], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     /**
      * Create a new animal.
@@ -299,4 +343,6 @@ class AnimalController extends AbstractController
 
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);
     }
+
+     
 }

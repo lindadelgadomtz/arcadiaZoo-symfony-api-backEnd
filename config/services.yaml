@@ -28,3 +28,12 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    
+    mongo.client:
+        class: MongoDB\Client
+        arguments:
+            - '%env(MONGODB_URI)%'  # Inject the MONGODB_URI environment variable as the client URI
+    
+    App\Service\AnimalService:
+        arguments:
+             $mongoClient: '@mongo.client'
